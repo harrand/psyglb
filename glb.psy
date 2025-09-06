@@ -2,11 +2,56 @@
 {
 	add_build_file("psyjson/json.psy", "default");
 	set_executable("glb");
+	add_source_directory("src");
 }
+
+glb_parse_buffer ::= func(buf : u8?, len : u64, a : arena mut? -> glb)
+{
+	return glb_do_parse(buf, len, a).result;
+};
+
+glb_parse_file ::= func(path : u8?, a : arena mut? -> glb)
+{
+	if(!file_exists(path))
+	{
+		return glb{.errmsg := "file does not exist";};
+	}
+	filelen ::= file_size_bytes(path);
+	data : u8? mut := arena_alloc(a, filelen);
+	file_read(path, data, filelen);
+	return glb_parse_buffer(data, filelen, a);
+};
+
+glb_validate ::= func(g : glb, assert : bool -> bool)
+{
+	if(g.errmsg == zero)
+	{
+		return true;
+	}
+	putzstr(g.errmsg);
+	putchar(10);
+	if(assert)
+	{
+		__debugbreak();
+	}
+	return false;
+};
+
+global_arena_value : arena mut := zero;
+global_arena : arena mut? mut := zero;
 
 main ::= func(argc : s32, argv : u8??, envp : u8?? -> s32)
 {
-	putzstr("hello world!");
-	putchar(10);
+	global_arena_value = arena_create(4096 * 1024);
+	global_arena = ref global_arena_value;
+	defer arena_destroy(global_arena);
+	if(argc <= 1)
+	{
+		return 0;
+	}
+	path ::= deref(argv#1);
+	g ::= glb_parse_file(path, global_arena);
+	glb_validate(g, true);
+
 	return 0;
 };

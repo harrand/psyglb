@@ -1,0 +1,10 @@
+glb_parse_state ::= struct
+{
+	result : glb;
+};
+
+glb_do_parse ::= func(buf : u8?, len : u64, a : arena mut? -> glb_parse_state)
+{
+	ret ::= zero@glb_parse_state mut;
+	return ret;
+};

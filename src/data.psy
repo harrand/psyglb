@@ -1,0 +1,4 @@
+glb ::= struct
+{
+	errmsg : u8?;
+};
