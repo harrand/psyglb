@@ -1,0 +1,3 @@
+[submodule "psyjson"]
+	path = psyjson
+	url = https://github.com/harrand/psyjson
