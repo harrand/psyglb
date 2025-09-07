@@ -1,10 +1,71 @@
 glb_parse_state ::= struct
 {
 	result : glb;
+	hdr : glb_header;
+};
+
+glb_header ::= struct
+{
+	magic : u32;
+	version : u32;
+	length : u32;
+};
+
+glb_chunk ::= struct
+{
+	length : u32;
+	type : u32;
+	data : u8?;
+};
+
+glb_validate_hdr ::= func(s : glb_parse_state mut? -> v0)
+{
+	hdr ::= s->hdr;
+	if(hdr.magic != 0x46546C67)
+	{
+		glb_parse_error(s, "invalid glb header - magic mismatch");
+	}
+	if(hdr.version != 2)
+	{
+		glb_parse_error(s, "invalid glb header - must be version 2");
+	}
+};
+
+glb_parse_error ::= func(s : glb_parse_state mut?, errmsg : u8? -> v0)
+{
+	s->result.errmsg = errmsg;
+};
+
+glb_parse_chunk ::= func(buf : u8? -> glb_chunk)
+{
+	ret ::= deref((buf)@glb_chunk mut?);
+	// directly after length + type
+	ret.data = (buf # (__sizeof(u32) + __sizeof(u32)));
+	return ret;
+};
+
+glb_chunk_total_size ::= func(c : glb_chunk -> u64)
+{
+	return __sizeof(u32) + __sizeof(u32) + (c.length);
 };
 
 glb_do_parse ::= func(buf : u8?, len : u64, a : arena mut? -> glb_parse_state)
 {
 	ret ::= zero@glb_parse_state mut;
+	ret.hdr = deref((buf)@glb_header?);
+	glb_validate_hdr(ref ret);
+	offset : u64 mut := __sizeof(glb_header);
+
+	json_chunk : glb_chunk mut;
+	while(offset < len)
+	{
+		chunk ::= glb_parse_chunk(buf # offset);
+		if(offset == __sizeof(glb_header))
+		{
+			// this is the first chunk. guaranteed to be the json chunk
+			ret.result.json = json_parse_buffer_named("<glb json chunk>", chunk.data, chunk.length@_, a);
+		}
+		offset = offset + glb_chunk_total_size(chunk);
+	}
 	return ret;
 };

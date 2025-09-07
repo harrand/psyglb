@@ -37,6 +37,11 @@ glb_validate ::= func(g : glb, assert : bool -> bool)
 	return false;
 };
 
+glb_print ::= func(g : glb -> v0)
+{
+	glb_verbose_print(g);
+};
+
 global_arena_value : arena mut := zero;
 global_arena : arena mut? mut := zero;
 
@@ -52,6 +57,7 @@ main ::= func(argc : s32, argv : u8??, envp : u8?? -> s32)
 	path ::= deref(argv#1);
 	g ::= glb_parse_file(path, global_arena);
 	glb_validate(g, true);
+	glb_print(g);
 
 	return 0;
 };

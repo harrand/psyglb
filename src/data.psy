@@ -1,4 +1,17 @@
 glb ::= struct
 {
 	errmsg : u8?;
+	json : json_data;
+};
+
+glb_verbose_print ::= func(g : glb -> v0)
+{
+	if(g.errmsg != zero)
+	{
+		putzstr("glb error: ");
+		putzstr(g.errmsg);
+		putchar(10);
+		return;
+	}
+	json_print(g.json);
 };
