@@ -42,6 +42,18 @@ glb_print ::= func(g : glb -> v0)
 	glb_verbose_print(g);
 };
 
+glb_default_scene ::= func(g : glb -> u64)
+{
+	return g.default_scene;
+};
+
+glb_scene_count ::= func(g : glb -> u64)
+{
+	scenes_field ::= json_object_find_fieldz(g.json, "scenes");
+	// its an array
+	return json_array_length(deref scenes_field);
+};
+
 global_arena_value : arena mut := zero;
 global_arena : arena mut? mut := zero;
 

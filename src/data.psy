@@ -2,6 +2,34 @@ glb ::= struct
 {
 	errmsg : u8?;
 	json : json_data;
+
+	default_scene : u64;
+	scenes : glb_scene mut?;
+	scenes_count : u64;
+};
+
+glb_scene ::= struct
+{
+	name : u8?;
+	name_len : u64;
+	nodes : u64?;
+	nodes_count : u64;
+};
+
+glb_scene_verbose_print ::= func(s : glb_scene -> v0)
+{
+	putbytes(s.name, s.name_len);
+	putzstr(": [");
+	i : u64 mut;
+	for(i = 0, i < (s.nodes_count), i = i + 1)
+	{
+		putuint(deref(s.nodes # i));
+		if(i < (s.nodes_count - 1))
+		{
+			putchar(' ');
+		}
+	}
+	putzstr("]");
 };
 
 glb_verbose_print ::= func(g : glb -> v0)
@@ -13,5 +41,10 @@ glb_verbose_print ::= func(g : glb -> v0)
 		putchar(10);
 		return;
 	}
-	json_print(g.json);
+	i : u64 mut;
+	for(i = 0, i < (g.scenes_count), i = i + 1)
+	{
+		glb_scene_verbose_print(deref(g.scenes # i));
+		putchar(10);
+	}
 };

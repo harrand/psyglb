@@ -49,6 +49,37 @@ glb_chunk_total_size ::= func(c : glb_chunk -> u64)
 	return __sizeof(u32) + __sizeof(u32) + (c.length);
 };
 
+glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+{
+	i : u64 mut;
+	j : u64 mut;
+	// scenes
+	(g->default_scene) = json_number_get_integer(deref json_object_find_fieldz(g->json, "scene"))@u64;
+	scenes_field ::= json_object_find_fieldz(g->json, "scenes");
+	g->scenes_count = json_array_length(deref scenes_field);
+	g->scenes = arena_alloc(a, __sizeof(glb_scene) * (g->scenes_count));
+	for(i = 0, i < (g->scenes_count), i = i + 1)
+	{
+		cur ::= json_array_get_element(deref scenes_field, i);
+		namefield ::= json_object_find_fieldz(deref cur, "name");
+		nodesfield ::= json_object_find_fieldz(deref cur, "nodes");
+		nodescount ::= json_array_length(deref nodesfield)@u64;
+		nodes : u64 mut? := arena_alloc(a, __sizeof(u64) * nodescount);
+		for(j = 0, j < nodescount, j = j + 1)
+		{
+			deref(nodes#j) = json_number_get_integer(deref json_array_get_element(deref nodesfield, j))@_;
+		}
+	
+		deref(g->scenes # i) = glb_scene
+		{
+			.name := json_string_data(deref namefield);
+			.name_len := json_string_length(deref namefield);
+			.nodes := nodes;
+			.nodes_count := nodescount;
+		};
+	}
+};
+
 glb_do_parse ::= func(buf : u8?, len : u64, a : arena mut? -> glb_parse_state)
 {
 	ret ::= zero@glb_parse_state mut;
@@ -67,5 +98,6 @@ glb_do_parse ::= func(buf : u8?, len : u64, a : arena mut? -> glb_parse_state)
 		}
 		offset = offset + glb_chunk_total_size(chunk);
 	}
+	glb_populate_fields_from_json(ref(ret.result), a);
 	return ret;
 };
