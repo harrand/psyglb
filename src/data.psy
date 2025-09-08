@@ -12,8 +12,8 @@ glb_scene ::= struct
 {
 	name : u8?;
 	name_len : u64;
-	nodes : u64?;
-	nodes_count : u64;
+	node_indices : u64?;
+	node_indices_count : u64;
 };
 
 glb_scene_verbose_print ::= func(s : glb_scene -> v0)
@@ -21,10 +21,10 @@ glb_scene_verbose_print ::= func(s : glb_scene -> v0)
 	putbytes(s.name, s.name_len);
 	putzstr(": [");
 	i : u64 mut;
-	for(i = 0, i < (s.nodes_count), i = i + 1)
+	for(i = 0, i < (s.node_indices_count), i = i + 1)
 	{
-		putuint(deref(s.nodes # i));
-		if(i < (s.nodes_count - 1))
+		putuint(deref(s.node_indices # i));
+		if(i < (s.node_indices_count - 1))
 		{
 			putchar(' ');
 		}
