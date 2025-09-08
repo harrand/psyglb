@@ -6,6 +6,9 @@ glb ::= struct
 	default_scene : u64;
 	scenes : glb_scene mut?;
 	scenes_count : u64;
+
+	nodes : glb_node mut?;
+	nodes_count : u64;
 };
 
 glb_scene ::= struct
@@ -14,6 +17,16 @@ glb_scene ::= struct
 	name_len : u64;
 	node_indices : u64?;
 	node_indices_count : u64;
+};
+
+glb_badidx : u64 static := -1;
+
+glb_node ::= struct
+{
+	name : u8?;
+	name_len : u64;
+	mesh_idx : u64;
+	skin_idx : u64;
 };
 
 glb_scene_verbose_print ::= func(s : glb_scene -> v0)

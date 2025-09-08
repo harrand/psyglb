@@ -49,7 +49,7 @@ glb_chunk_total_size ::= func(c : glb_chunk -> u64)
 	return __sizeof(u32) + __sizeof(u32) + (c.length);
 };
 
-glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+glb_populate_scenes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 {
 	i : u64 mut;
 	j : u64 mut;
@@ -62,22 +62,82 @@ glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	{
 		cur ::= json_array_get_element(deref scenes_field, i);
 		namefield ::= json_object_find_fieldz(deref cur, "name");
-		node_indices_field ::= json_object_find_fieldz(deref cur, "nodes");
-		node_indices_count ::= json_array_length(deref node_indices_field)@u64;
-		node_indices : u64 mut? := arena_alloc(a, __sizeof(u64) * node_indices_count);
-		for(j = 0, j < node_indices_count, j = j + 1)
+		name : u8? mut := zero;
+		name_len : u64 mut := zero;
+		if(namefield != zero)
 		{
-			deref(node_indices#j) = json_number_get_integer(deref json_array_get_element(deref node_indices_field, j))@_;
+			name = json_string_data(deref namefield);
+			name_len = json_string_length(deref namefield);
+		}
+		node_indices_field ::= json_object_find_fieldz(deref cur, "nodes");
+		node_indices : u64 mut? mut := zero;
+		node_indices_count : u64 mut := zero;
+		if(node_indices_field != zero)
+		{
+			node_indices_count = json_array_length(deref node_indices_field)@u64;
+			node_indices = arena_alloc(a, __sizeof(u64) * node_indices_count);
+			for(j = 0, j < node_indices_count, j = j + 1)
+			{
+				deref(node_indices#j) = json_number_get_integer(deref json_array_get_element(deref node_indices_field, j))@_;
+			}
 		}
 	
 		deref(g->scenes # i) = glb_scene
 		{
-			.name := json_string_data(deref namefield);
-			.name_len := json_string_length(deref namefield);
+			.name := name;
+			.name_len := name_len;
 			.node_indices := node_indices;
 			.node_indices_count := node_indices_count;
 		};
 	}
+};
+
+glb_populate_nodes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+{
+	i : u64 mut;
+	nodes_field ::= json_object_find_fieldz(g->json, "nodes");
+	g->nodes_count = json_array_length(deref nodes_field);
+	g->nodes = arena_alloc(a, __sizeof(glb_node) * (g->nodes_count));
+	for(i = 0, i < (g->nodes_count), i = i + 1)
+	{
+		cur ::= json_array_get_element(deref nodes_field, i);
+		mesh_idx : u64 mut := glb_badidx;
+		mesh_field ::= json_object_find_fieldz(deref cur, "mesh");
+		if(mesh_field != zero)
+		{
+			mesh_idx = json_number_get_integer(deref mesh_field)@_;
+		}
+
+		skin_idx : u64 mut := glb_badidx;
+		skin_field ::= json_object_find_fieldz(deref cur, "skin");
+		if(skin_field != zero)
+		{
+			skin_idx = json_number_get_integer(deref skin_field)@_;
+		}
+
+		name_field ::= json_object_find_fieldz(deref cur, "name");
+		name : u8? mut := zero;
+		name_len : u64 mut := zero;
+		if(name_field != zero)
+		{
+			name = json_string_data(deref name_field);
+			name_len = json_string_length(deref name_field);
+		}
+
+		deref(g->nodes # i) = glb_node
+		{
+			.name := name;
+			.name_len := name_len;
+			.mesh_idx := mesh_idx;
+			.skin_idx := skin_idx;
+		};
+	}
+};
+
+glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+{
+	glb_populate_scenes_from_json(g, a);
+	glb_populate_nodes_from_json(g, a);
 };
 
 glb_do_parse ::= func(buf : u8?, len : u64, a : arena mut? -> glb_parse_state)
