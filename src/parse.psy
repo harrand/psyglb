@@ -134,6 +134,24 @@ glb_populate_nodes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	}
 };
 
+glb_populate_buffers_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+{
+	i : u64 mut;
+	buffers_field ::= json_object_find_fieldz(g->json, "buffers");
+	g->buffers_count = json_array_length(deref buffers_field);
+	g->buffers = arena_alloc(a, __sizeof(glb_buffer) * (g->buffers_count));
+	for(i = 0, i < (g->buffers_count), i = i + 1)
+	{
+		cur ::= json_array_get_element(deref buffers_field, i);
+		
+		//deref(g->buffers # i) = glb_buffer
+		//{
+		//	.ptr := 
+		//};
+	}
+	
+};
+
 glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 {
 	glb_populate_scenes_from_json(g, a);
@@ -155,9 +173,40 @@ glb_do_parse ::= func(buf : u8?, len : u64, a : arena mut? -> glb_parse_state)
 		{
 			// this is the first chunk. guaranteed to be the json chunk
 			ret.result.json = json_parse_buffer_named("<glb json chunk>", chunk.data, chunk.length@_, a);
+			putzstr("json chunk size: ");
+			putuint(chunk.length@_);
+			putchar(10);
 		}
-		offset = offset + glb_chunk_total_size(chunk);
+		else
+		{
+			if(ret.result.bin.data == zero)
+			{
+				// ensure that the chunk header is BIN\0
+				if(!streql_n(ref(chunk.type)@u8?, "BIN", 3))
+				{
+					putzstr("the non-first chunk was not a BIN chunk. its header was:");
+					putbytes(ref(chunk.type)@u8?, 4);
+					putchar(10);
+					__debugbreak();
+				}
+				ret.result.bin = glb_binary_chunk
+				{
+					.data := chunk.data;
+					.length := chunk.length@_;
+				};
+			}
+			else
+			{
+				// a 3rd chunk has appeared... just ignore it
+				putzstr("warning: more than 2 chunks detected in glb. ignoring chunk of type: ");
+				putchar('"');
+				putbytes(ref(chunk.type)@u8?, 4);
+				putchar('"');
+			}
+		}
+		offset = (offset + glb_chunk_total_size(chunk));
 	}
+
 	glb_populate_fields_from_json(ref(ret.result), a);
 	return ret;
 };

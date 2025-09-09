@@ -1,7 +1,10 @@
+glb_badidx : u64 static := -1;
+
 glb ::= struct
 {
 	errmsg : u8?;
 	json : json_data;
+	bin : glb_binary_chunk;
 
 	default_scene : u64;
 	scenes : glb_scene mut?;
@@ -9,6 +12,15 @@ glb ::= struct
 
 	nodes : glb_node mut?;
 	nodes_count : u64;
+
+	buffers : glb_buffer mut?;
+	buffers_count : u64;
+};
+
+glb_binary_chunk ::= struct
+{
+	data : u8?;
+	length : u64;
 };
 
 glb_scene ::= struct
@@ -19,14 +31,18 @@ glb_scene ::= struct
 	node_indices_count : u64;
 };
 
-glb_badidx : u64 static := -1;
-
 glb_node ::= struct
 {
 	name : u8?;
 	name_len : u64;
 	mesh_idx : u64;
 	skin_idx : u64;
+};
+
+glb_buffer ::= struct
+{
+	ptr : v0?;
+	len : u64;
 };
 
 glb_scene_verbose_print ::= func(s : glb_scene -> v0)
@@ -45,6 +61,16 @@ glb_scene_verbose_print ::= func(s : glb_scene -> v0)
 	putzstr("]");
 };
 
+glb_node_verbose_print ::= func(n : glb_node -> v0)
+{
+	putbytes(n.name, n.name_len);
+	putzstr(" [mesh: ");
+	putuint(n.mesh_idx);
+	putzstr(", skin: ");
+	putuint(n.skin_idx);
+	putzstr("]");
+};
+
 glb_verbose_print ::= func(g : glb -> v0)
 {
 	if(g.errmsg != zero)
@@ -55,9 +81,9 @@ glb_verbose_print ::= func(g : glb -> v0)
 		return;
 	}
 	i : u64 mut;
-	for(i = 0, i < (g.scenes_count), i = i + 1)
+	for(i = 0, i < (g.nodes_count), i = i + 1)
 	{
-		glb_scene_verbose_print(deref(g.scenes # i));
+		glb_node_verbose_print(deref(g.nodes # i));
 		putchar(10);
 	}
 };
