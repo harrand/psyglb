@@ -143,6 +143,14 @@ glb_populate_views_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	for(i = 0, i < (g->views_count), i = i + 1)
 	{
 		cur ::= json_array_get_element(deref views_field, i);
+
+		buf_idx ::= json_number_get_integer(deref json_object_find_fieldz(deref cur, "buffer"));
+		if(buf_idx != 0)
+		{
+			putzstr("detected bufferView not pointed at buffer 0, which is not supported");
+			__debugbreak();
+		}
+
 		off_field ::= json_object_find_fieldz(deref cur, "byteOffset");
 		offset : u64 mut := 0;	
 		if(off_field != zero)
