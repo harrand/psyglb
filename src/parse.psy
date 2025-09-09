@@ -231,6 +231,54 @@ glb_populate_accessors_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	}
 };
 
+glb_populate_meshes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+{
+	i : u64 mut;
+	j : u64 mut;
+	meshes_field ::= json_object_find_fieldz(g->json, "meshes");
+	g->meshes_count = json_array_length(deref meshes_field);
+	g->meshes = arena_alloc(a, __sizeof(glb_mesh) * (g->meshes_count));
+	for(i = 0, i < (g->meshes_count), i = i + 1)
+	{
+		curmesh ::= json_array_get_element(deref meshes_field, i);
+		name_field ::= json_object_find_fieldz(deref curmesh, "name");
+		name : u8? mut := zero;
+		name_len : u64 mut := zero;
+		if(name_field != zero)
+		{
+			name = json_string_data(deref name_field);
+			name_len = json_string_length(deref name_field);
+		}
+		
+		primitives_count : u64 mut := 0;
+		primitives : glb_mesh_primitive mut? mut := zero;
+		primitives_field ::= json_object_find_fieldz(deref curmesh, "primitives");
+		if(primitives_field != zero)
+		{	
+			primitives_count = json_array_length(deref primitives_field);
+			primitives = arena_alloc(a, __sizeof(glb_mesh_primitive) * primitives_count);
+			// todo: populate primitive values
+			for(j = 0, j < primitives_count, j = j + 1)
+			{
+				deref(primitives # j) = glb_populate_primitive_from_json(deref(json_array_get_element(deref primitives_field, j)));
+			}
+		}
+
+		deref(g->meshes # i) = glb_mesh
+		{
+			.name := name;
+			.name_len := name_len;
+			.primitives := primitives;
+			.primitives_count := primitives_count;
+		};
+	}
+};
+
+glb_populate_primitive_from_json ::= func(primitive_field : json_data -> glb_mesh_primitive)
+{
+	return zero;
+};
+
 glb_verify_single_buffer ::= func(g : glb mut?, a : arena mut? -> v0)
 {
 	i : u64 mut;
@@ -264,6 +312,7 @@ glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	glb_verify_single_buffer(g, a);
 	glb_populate_views_from_json(g, a);
 	glb_populate_accessors_from_json(g, a);
+	glb_populate_meshes_from_json(g, a);
 };
 
 glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb_parse_state)

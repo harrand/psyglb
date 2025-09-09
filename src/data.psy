@@ -18,6 +18,9 @@ glb ::= struct
 
 	accessors : glb_accessor mut?;
 	accessors_count : u64;
+
+	meshes : glb_mesh mut?;
+	meshes_count : u64;
 };
 
 glb_view ::= struct
@@ -76,6 +79,31 @@ glb_accessor ::= struct
 	type_len : u64;
 };
 
+glb_mesh ::= struct
+{
+	name : u8?;
+	name_len : u64;
+	primitives : glb_mesh_primitive mut?;
+	primitives_count : u64;
+};
+
+glb_mesh_primitive ::= struct
+{
+	mode : u64;
+	indices : u64;
+	position_attrib : u64;
+	normal_attrib : u64;
+	tangent_attrib : u64;
+	texcoord_attribs : u64 mut?;
+	texcoord_attribs_count : u64;
+	color_attribs : u64 mut?;
+	color_attribs_count : u64;
+	joint_attribs : u64 mut?;
+	joint_attribs_count : u64;
+	weight_attribs : u64 mut?;
+	weight_attribs_count : u64;
+};
+
 glb_scene_verbose_print ::= func(s : glb_scene -> v0)
 {
 	putbytes(s.name, s.name_len);
@@ -123,6 +151,18 @@ glb_view_verbose_print ::= func(n : glb_view -> v0)
 	putzstr("]");
 };
 
+glb_mesh_verbose_print ::= func(m : glb_mesh -> v0)
+{
+	if(m.name != zero)
+	{
+		putbytes(m.name, m.name_len);
+	}
+	else
+	{
+		putzstr("<unnamed mesh>");
+	}
+};
+
 glb_verbose_print ::= func(g : glb -> v0)
 {
 	if(g.errmsg != zero)
@@ -133,9 +173,9 @@ glb_verbose_print ::= func(g : glb -> v0)
 		return;
 	}
 	i : u64 mut;
-	for(i = 0, i < (g.views_count), i = i + 1)
+	for(i = 0, i < (g.meshes_count), i = i + 1)
 	{
-		glb_view_verbose_print(deref(g.views # i));
+		glb_mesh_verbose_print(deref(g.meshes # i));
 		putchar(10);
 	}
 };
