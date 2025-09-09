@@ -22,11 +22,16 @@ glb ::= struct
 
 glb_view ::= struct
 {
+	// optional - default zero
 	offset : u64;
 	length : u64;
+	// optional - default badidx
 	stride : u64;
+	// optional - default badidx
 	target : u64;
+	// optional - default zero
 	name : u8?;
+	// optional - default zero
 	name_len : u64;
 };
 
@@ -38,23 +43,32 @@ glb_binary_chunk ::= struct
 
 glb_scene ::= struct
 {
+	// optional - default zero
 	name : u8?;
+	// optional - default zero
 	name_len : u64;
+	// optional - default zero
 	node_indices : u64?;
+	// optional - default zero
 	node_indices_count : u64;
 };
 
 glb_node ::= struct
 {
+	// optional - default zero
 	name : u8?;
+	// optional - default zero
 	name_len : u64;
+	// optional - default badidx
 	mesh_idx : u64;
+	// optional - default badidx
 	skin_idx : u64;
 };
 
 glb_accessor ::= struct
 {
 	view_idx : u64;
+	// optional - default 0
 	offset : u64;
 	component_type: u64;
 	count : u64;
