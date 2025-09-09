@@ -13,8 +13,18 @@ glb ::= struct
 	nodes : glb_node mut?;
 	nodes_count : u64;
 
-	buffers : glb_buffer mut?;
-	buffers_count : u64;
+	views : glb_view mut?;
+	views_count : u64;
+};
+
+glb_view ::= struct
+{
+	offset : u64;
+	length : u64;
+	stride : u64;
+	target : u64;
+	name : u8?;
+	name_len : u64;
 };
 
 glb_binary_chunk ::= struct
@@ -37,12 +47,6 @@ glb_node ::= struct
 	name_len : u64;
 	mesh_idx : u64;
 	skin_idx : u64;
-};
-
-glb_buffer ::= struct
-{
-	ptr : v0?;
-	len : u64;
 };
 
 glb_scene_verbose_print ::= func(s : glb_scene -> v0)
@@ -71,6 +75,27 @@ glb_node_verbose_print ::= func(n : glb_node -> v0)
 	putzstr("]");
 };
 
+glb_view_verbose_print ::= func(n : glb_view -> v0)
+{
+	if(n.name != zero)
+	{
+		putbytes(n.name, n.name_len);
+	}
+	else
+	{
+		putzstr("<unnamed view>");
+	}
+	putzstr(" [offset: ");
+	putuint(n.offset);
+	putzstr(", length: ");
+	putuint(n.length);
+	putzstr(", stride: ");
+	putuint(n.stride);
+	putzstr(", target: ");
+	putuint(n.target);
+	putzstr("]");
+};
+
 glb_verbose_print ::= func(g : glb -> v0)
 {
 	if(g.errmsg != zero)
@@ -81,9 +106,9 @@ glb_verbose_print ::= func(g : glb -> v0)
 		return;
 	}
 	i : u64 mut;
-	for(i = 0, i < (g.nodes_count), i = i + 1)
+	for(i = 0, i < (g.views_count), i = i + 1)
 	{
-		glb_node_verbose_print(deref(g.nodes # i));
+		glb_view_verbose_print(deref(g.views # i));
 		putchar(10);
 	}
 };
