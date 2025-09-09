@@ -195,6 +195,42 @@ glb_populate_views_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	}
 };
 
+glb_populate_accessors_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+{
+	i : u64 mut;
+	accessors_field ::= json_object_find_fieldz(g->json, "accessors");
+	g->accessors_count = json_array_length(deref accessors_field);
+	g->accessors = arena_alloc(a, __sizeof(glb_accessor) * (g->accessors_count));
+	for(i = 0, i < (g->accessors_count), i = i + 1)
+	{
+		cur ::= json_array_get_element(deref accessors_field, i);
+		if(json_object_find_fieldz(deref cur, "sparse") != zero)
+		{
+			putzstr("sparse accessors in a GLB are not supported");
+			__debugbreak();
+			return;
+		}
+
+		type_field ::= json_object_find_fieldz(deref cur, "type");
+		offset_field ::= json_object_find_fieldz(deref cur, "byteOffset");
+		offset : u64 mut := 0;
+		if(offset_field != zero)
+		{
+			offset = json_number_get_integer(deref offset_field)@_;
+		}
+
+		deref(g->accessors # i) = glb_accessor
+		{
+			.view_idx := json_number_get_integer(deref json_object_find_fieldz(deref cur, "bufferView"))@_;
+			.offset := offset;
+			.component_type := json_number_get_integer(deref json_object_find_fieldz(deref cur, "componentType"))@_;
+			.count := json_number_get_integer(deref json_object_find_fieldz(deref cur, "count"))@_;
+			.type := json_string_data(deref type_field);
+			.type_len := json_string_length(deref type_field);
+		};
+	}
+};
+
 glb_verify_single_buffer ::= func(g : glb mut?, a : arena mut? -> v0)
 {
 	i : u64 mut;
@@ -227,6 +263,7 @@ glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	glb_populate_nodes_from_json(g, a);
 	glb_verify_single_buffer(g, a);
 	glb_populate_views_from_json(g, a);
+	glb_populate_accessors_from_json(g, a);
 };
 
 glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb_parse_state)
