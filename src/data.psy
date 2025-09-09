@@ -94,14 +94,10 @@ glb_mesh_primitive ::= struct
 	position_attrib : u64;
 	normal_attrib : u64;
 	tangent_attrib : u64;
-	texcoord_attribs : u64 mut?;
-	texcoord_attribs_count : u64;
-	color_attribs : u64 mut?;
-	color_attribs_count : u64;
-	joint_attribs : u64 mut?;
-	joint_attribs_count : u64;
-	weight_attribs : u64 mut?;
-	weight_attribs_count : u64;
+	texcoord_attribs : u64 mut[4];
+	color_attribs : u64 mut[4];
+	joint_attribs : u64 mut[4];
+	weight_attribs : u64 mut[4];
 };
 
 glb_scene_verbose_print ::= func(s : glb_scene -> v0)
@@ -160,6 +156,113 @@ glb_mesh_verbose_print ::= func(m : glb_mesh -> v0)
 	else
 	{
 		putzstr("<unnamed mesh>");
+	}
+	i : u64 mut;
+	for(i = 0, i < (m.primitives_count), i = i + 1)
+	{
+		p ::= deref(m.primitives # i);
+		putchar(10);
+		putchar(9);
+		putzstr("[mode: ");
+		putuint(p.mode);
+		putzstr(", indices: ");
+		putuint(p.indices);
+		putzstr(", attribs: {");
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("position: ");
+		putuint(p.position_attrib);
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("normal: ");
+		putuint(p.normal_attrib);
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("tangent: ");
+		putuint(p.tangent_attrib);
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("texcoord0: ");
+		putuint(deref(p.texcoord_attribs # 0));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("texcoord1: ");
+		putuint(deref(p.texcoord_attribs # 1));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("texcoord2: ");
+		putuint(deref(p.texcoord_attribs # 2));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("texcoord3: ");
+		putuint(deref(p.texcoord_attribs # 3));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("color0: ");
+		putuint(deref(p.color_attribs # 0));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("color1: ");
+		putuint(deref(p.color_attribs # 1));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("color2: ");
+		putuint(deref(p.color_attribs # 2));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("color3: ");
+		putuint(deref(p.color_attribs # 3));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("joint0: ");
+		putuint(deref(p.joint_attribs # 0));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("joint1: ");
+		putuint(deref(p.joint_attribs # 1));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("joint2: ");
+		putuint(deref(p.joint_attribs # 2));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("weight0: ");
+		putuint(deref(p.weight_attribs # 0));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("weight1: ");
+		putuint(deref(p.weight_attribs # 1));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("weight2: ");
+		putuint(deref(p.weight_attribs # 2));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("weight3: ");
+		putuint(deref(p.weight_attribs # 3));
+
+		putchar(10);
+		putchar(9);putchar(9);
+		putzstr("weight3: ");
+		putuint(deref(p.weight_attribs # 3));
+		putzstr("]");
 	}
 };
 

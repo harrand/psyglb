@@ -276,7 +276,132 @@ glb_populate_meshes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 
 glb_populate_primitive_from_json ::= func(primitive_field : json_data -> glb_mesh_primitive)
 {
-	return zero;
+	// lets do the hard part - attribs
+	attribs_field ::= json_object_find_fieldz(primitive_field, "attributes");
+
+	position : u64 mut := glb_badidx;
+	normal : u64 mut := glb_badidx;
+	tangent : u64 mut := glb_badidx;
+	texcoord ::= u64 mut[4]{glb_badidx; glb_badidx; glb_badidx; glb_badidx;};
+	color ::= u64 mut[4]{glb_badidx; glb_badidx; glb_badidx; glb_badidx;};
+	joint ::= u64 mut[4]{glb_badidx; glb_badidx; glb_badidx; glb_badidx;};
+	weight ::= u64 mut[4]{glb_badidx; glb_badidx; glb_badidx; glb_badidx;};
+
+	position_field ::= json_object_find_fieldz(deref attribs_field, "POSITION");
+	if(position_field != zero)
+	{
+		position = json_number_get_integer(deref position_field)@_;
+	}
+	normal_field ::= json_object_find_fieldz(deref attribs_field, "NORMAL");
+	if(normal_field != zero)
+	{
+		normal = json_number_get_integer(deref normal_field)@_;
+	}
+	tangent_field ::= json_object_find_fieldz(deref attribs_field, "TANGENT");
+	if(tangent_field != zero)
+	{
+		tangent = json_number_get_integer(deref tangent_field)@_;
+	}
+	texcoord0_field ::= json_object_find_fieldz(deref attribs_field, "TEXCOORD_0");
+	if(texcoord0_field != zero)
+	{
+		deref(texcoord # 0) = json_number_get_integer(deref texcoord0_field)@_;
+	}
+	texcoord1_field ::= json_object_find_fieldz(deref attribs_field, "TEXCOORD_1");
+	if(texcoord1_field != zero)
+	{
+		deref(texcoord # 1) = json_number_get_integer(deref texcoord1_field)@_;
+	}
+	texcoord2_field ::= json_object_find_fieldz(deref attribs_field, "TEXCOORD_2");
+	if(texcoord2_field != zero)
+	{
+		deref(texcoord # 2) = json_number_get_integer(deref texcoord2_field)@_;
+	}
+	texcoord3_field ::= json_object_find_fieldz(deref attribs_field, "TEXCOORD_3");
+	if(texcoord3_field != zero)
+	{
+		deref(texcoord # 3) = json_number_get_integer(deref texcoord3_field)@_;
+	}
+	color0_field ::= json_object_find_fieldz(deref attribs_field, "COLOR_0");
+	if(color0_field != zero)
+	{
+		deref(color # 0) = json_number_get_integer(deref color0_field)@_;
+	}
+	color1_field ::= json_object_find_fieldz(deref attribs_field, "COLOR_1");
+	if(color1_field != zero)
+	{
+		deref(color # 1) = json_number_get_integer(deref color1_field)@_;
+	}
+	color2_field ::= json_object_find_fieldz(deref attribs_field, "COLOR_2");
+	if(color2_field != zero)
+	{
+		deref(color # 2) = json_number_get_integer(deref color2_field)@_;
+	}
+	color3_field ::= json_object_find_fieldz(deref attribs_field, "COLOR_3");
+	if(color3_field != zero)
+	{
+		deref(color # 3) = json_number_get_integer(deref color3_field)@_;
+	}
+	joint0_field ::= json_object_find_fieldz(deref attribs_field, "JOINTS_0");
+	if(joint0_field != zero)
+	{
+		deref(joint # 0) = json_number_get_integer(deref joint0_field)@_;
+	}
+	joint1_field ::= json_object_find_fieldz(deref attribs_field, "JOINTS_1");
+	if(joint1_field != zero)
+	{
+		deref(joint # 1) = json_number_get_integer(deref joint1_field)@_;
+	}
+	joint2_field ::= json_object_find_fieldz(deref attribs_field, "JOINTS_2");
+	if(joint2_field != zero)
+	{
+		deref(joint # 2) = json_number_get_integer(deref joint2_field)@_;
+	}
+	joint3_field ::= json_object_find_fieldz(deref attribs_field, "JOINTS_3");
+	if(joint3_field != zero)
+	{
+		deref(joint # 3) = json_number_get_integer(deref joint3_field)@_;
+	}
+
+	weight0_field ::= json_object_find_fieldz(deref attribs_field, "WEIGHTS_0");
+	if(weight0_field != zero)
+	{
+		deref(weight # 0) = json_number_get_integer(deref weight0_field)@_;
+	}
+	weight1_field ::= json_object_find_fieldz(deref attribs_field, "WEIGHTS_1");
+	if(weight1_field != zero)
+	{
+		deref(weight # 1) = json_number_get_integer(deref weight1_field)@_;
+	}
+	weight2_field ::= json_object_find_fieldz(deref attribs_field, "WEIGHTS_2");
+	if(weight2_field != zero)
+	{
+		deref(weight # 2) = json_number_get_integer(deref weight2_field)@_;
+	}
+	weight3_field ::= json_object_find_fieldz(deref attribs_field, "WEIGHTS_3");
+	if(weight3_field != zero)
+	{
+		deref(weight # 3) = json_number_get_integer(deref weight3_field)@_;
+	}
+
+	indices : u64 mut := glb_badidx;
+	material : u64 mut := glb_badidx;
+	GLTF_MODE_TRIANGLES ::= 4;
+	mode : u64 mut := GLTF_MODE_TRIANGLES;
+	// todo: targets
+
+	return glb_mesh_primitive
+	{
+		.mode := mode;
+		.indices := indices;
+		.position_attrib := position;
+		.normal_attrib := normal;
+		.tangent_attrib := tangent;
+		.texcoord_attribs := texcoord;
+		.color_attribs := color;
+		.joint_attribs := joint;
+		.weight_attribs := weight;
+	};
 };
 
 glb_verify_single_buffer ::= func(g : glb mut?, a : arena mut? -> v0)
