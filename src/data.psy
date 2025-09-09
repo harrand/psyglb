@@ -257,12 +257,6 @@ glb_mesh_verbose_print ::= func(m : glb_mesh -> v0)
 		putchar(9);putchar(9);
 		putzstr("weight3: ");
 		putuint(deref(p.weight_attribs # 3));
-
-		putchar(10);
-		putchar(9);putchar(9);
-		putzstr("weight3: ");
-		putuint(deref(p.weight_attribs # 3));
-		putzstr("]");
 	}
 };
 
