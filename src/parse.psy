@@ -95,6 +95,7 @@ glb_populate_scenes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 glb_populate_nodes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 {
 	i : u64 mut;
+	j : u64 mut;
 	nodes_field ::= json_object_find_fieldz(g->json, "nodes");
 	g->nodes_count = json_array_length(deref nodes_field);
 	g->nodes = arena_alloc(a, __sizeof(glb_node) * (g->nodes_count));
@@ -124,12 +125,62 @@ glb_populate_nodes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 			name_len = json_string_length(deref name_field);
 		}
 
+		matrix : f32 mut[16] mut;
+		translate : f32 mut[3] := zero;
+		rotate : f32 mut[4] := f32[4]{0.0; 0.0; 0.0; 1.0;};
+		scale : f32 mut[3] := f32[3]{1.0; 1.0; 1.0;};
+		transform : glb_node_transform mut := zero;
+		
+		matrix_field ::= json_object_find_fieldz(deref cur, "matrix");
+		if(matrix_field != zero)
+		{
+			transform = (glb_node_transform.matrix);
+			for(j = 0, j < 16, j = j + 1)
+			{
+				deref(matrix # j) = json_number_get_float(deref json_array_get_element(deref matrix_field, j))@_;
+			}
+		}
+		else
+		{
+			transform = (glb_node_transform.trs);
+		}
+		translate_field ::= json_object_find_fieldz(deref cur, "translation");
+		if(translate_field != zero)
+		{
+			for(j = 0, j < 3, j = j + 1)
+			{
+				deref(translate # j) = json_number_get_float(deref json_array_get_element(deref translate_field, j))@_;
+			}
+		}
+		rotate_field ::= json_object_find_fieldz(deref cur, "rotation");
+		if(rotate_field != zero)
+		{
+			for(j = 0, j < 4, j = j + 1)
+			{
+				deref(rotate # j) = json_number_get_float(deref json_array_get_element(deref rotate_field, j))@_;
+			}
+		}
+		scale_field ::= json_object_find_fieldz(deref cur, "scale");
+		if(scale_field != zero)
+		{
+			for(j = 0, j < 3, j = j + 1)
+			{
+				deref(scale # j) = json_number_get_float(deref json_array_get_element(deref scale_field, j))@_;
+			}
+		}
+
+		putchar(10);
 		deref(g->nodes # i) = glb_node
 		{
 			.name := name;
 			.name_len := name_len;
 			.mesh_idx := mesh_idx;
 			.skin_idx := skin_idx;
+			.transform := transform;
+			.matrix := matrix;
+			.translate := translate;
+			.rotate := rotate;
+			.scale := scale;
 		};
 	}
 };

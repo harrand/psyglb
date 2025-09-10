@@ -56,6 +56,12 @@ glb_scene ::= struct
 	node_indices_count : u64;
 };
 
+glb_node_transform ::= enum
+{
+	.matrix := 1;
+	.trs := 2;
+};
+
 glb_node ::= struct
 {
 	// optional - default zero
@@ -66,6 +72,16 @@ glb_node ::= struct
 	mesh_idx : u64;
 	// optional - default badidx
 	skin_idx : u64;
+	// optional - default trs
+	transform : glb_node_transform;
+	// optional - undefined if transform != .matrix
+	matrix : f32 mut[16];
+	// optional - undefined if transform != .trs
+	translate : f32 mut[3];
+	// optional - undefined if transform != .trs
+	rotate : f32 mut[4];
+	// optional - undefined if transform != .trs
+	scale : f32 mut[3];
 };
 
 glb_accessor ::= struct
@@ -123,7 +139,77 @@ glb_node_verbose_print ::= func(n : glb_node -> v0)
 	putuint(n.mesh_idx);
 	putzstr(", skin: ");
 	putuint(n.skin_idx);
+	putzstr("], ");
+	putzstr(__enumname(n.transform));
+	putzstr(": [");
+	putchar(10);
+
+	i : u64 mut;
+	j : u64 mut;
+	if(n.transform == (glb_node_transform.matrix))
+	{
+		mat ::= n.matrix;
+		for(i = 0, i < 4, i = i + 1)
+		{
+			putchar(9);
+			putchar('|');
+			for(j = 0, j < 4, j = j + 1)
+			{
+				putfloat(deref(mat # ((i * 3) + j)));
+				putzstr("   ");
+			}
+			putchar('|');
+			putchar(10);
+		}
+		putchar(10);
+	}
+	else
+	{
+		t ::= n.translate;
+		r ::= n.rotate;
+		s ::= n.scale;
+		putchar(9);
+		putzstr("t: [");
+		for(i = 0, i < 3, i = i + 1)
+		{
+			putfloat(deref(t # i));
+			if(i < 2)
+			{
+				putzstr(", ");
+			}
+		}
+		putzstr("]");
+		putchar(10);
+
+		putchar(9);
+		putzstr("r: [");
+		for(i = 0, i < 4, i = i + 1)
+		{
+			putfloat(deref(r # i));
+			if(i < 3)
+			{
+				putzstr(", ");
+			}
+		}
+		putzstr("]");
+		putchar(10);
+
+		putchar(9);
+		putzstr("s: [");
+		for(i = 0, i < 3, i = i + 1)
+		{
+			putfloat(deref(s # i));
+			if(i < 2)
+			{
+				putzstr(", ");
+			}
+		}
+		putzstr("]");
+		putchar(10);
+	}
+
 	putzstr("]");
+	
 };
 
 glb_view_verbose_print ::= func(n : glb_view -> v0)
@@ -270,9 +356,9 @@ glb_verbose_print ::= func(g : glb -> v0)
 		return;
 	}
 	i : u64 mut;
-	for(i = 0, i < (g.meshes_count), i = i + 1)
+	for(i = 0, i < (g.nodes_count), i = i + 1)
 	{
-		glb_mesh_verbose_print(deref(g.meshes # i));
+		glb_node_verbose_print(deref(g.nodes # i));
 		putchar(10);
 	}
 };
