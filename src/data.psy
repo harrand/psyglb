@@ -82,6 +82,10 @@ glb_node ::= struct
 	rotate : f32 mut[4];
 	// optional - undefined if transform != .trs
 	scale : f32 mut[3];
+	// optional - default zero
+	children : u64 mut? mut;
+	// optional - default zero
+	children_count : u64;
 };
 
 glb_accessor ::= struct
@@ -204,11 +208,24 @@ glb_node_verbose_print ::= func(n : glb_node -> v0)
 				putzstr(", ");
 			}
 		}
-		putzstr("]");
+		putzstr("]]");
 		putchar(10);
+		if(n.children_count > 0)
+		{
+			putzstr(", children: [");
+			putchar(10);
+			for(i = 0, i < (n.children_count), i = i + 1)
+			{
+				putchar(9);
+				if(i < (n.children_count - 1))
+				{
+					putuint(deref(n.children # i));
+					putchar(10);
+				}
+			}
+			putzstr("]");
+		}
 	}
-
-	putzstr("]");
 	
 };
 
