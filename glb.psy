@@ -42,9 +42,14 @@ glb_print ::= func(g : glb -> v0)
 	glb_verbose_print(g);
 };
 
-glb_default_scene ::= func(g : glb -> u64)
+glb_default_scene ::= func(g : glb -> glb_scene)
 {
-	return g.default_scene;
+	return glb_get_scene(g, g.default_scene);
+};
+
+glb_get_scene ::= func(g : glb, idx : u64 -> glb_scene)
+{
+	return deref(g.scenes # idx);
 };
 
 glb_scene_count ::= func(g : glb -> u64)
