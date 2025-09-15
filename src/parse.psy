@@ -357,22 +357,108 @@ glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 			name = json_string_data(deref name_field);
 			name_len = json_string_length(deref name_field);
 		}
-		
 
+		pbr : glb_pbr_metallic_roughness mut := zero;
+		pbr_field ::= json_object_find_fieldz(deref curmaterial, "pbrMetallicRoughness");
+		if(pbr_field == zero)
+		{
+			putzstr("detected glb with a material that is imssing its pbrMetallicRoughness field. these are not supported");
+			__debugbreak();
+		}
+		pbr.base_colour_texture = glb_populate_texture_from_json(deref json_object_find_fieldz(deref pbr_field, "baseColorTexture"));	
+
+		pbr.base_colour_factor = f32[4]{1.0; 1.0; 1.0; 1.0;};
+		base_colour_factor_field ::= json_object_find_fieldz(deref pbr_field, "baseColorFactor");
+		if(base_colour_factor_field != zero)
+		{
+			for(j = 0, j < 4, j = j + 1)
+			{
+				deref(pbr.base_colour_factor # j) = json_number_get_float(deref json_array_get_element(deref base_colour_factor_field, j))@_;
+			}
+		}
+
+		metallic_roughness_field ::= json_object_find_fieldz(deref pbr_field, "metallicRoughnessTexture");
+		pbr.has_metallic_roughness_texture = false;
+		if(metallic_roughness_field != zero)
+		{
+			pbr.metallic_roughness_texture = glb_populate_texture_from_json(deref metallic_roughness_field);
+			pbr.has_metallic_roughness_texture = true;
+		}
+		pbr.metallic_factor = json_number_get_float(deref json_object_find_fieldz(deref pbr_field, "metallicFactor"))@_;
+		pbr.roughness_factor = json_number_get_float(deref json_object_find_fieldz(deref pbr_field, "roughnessFactor"))@_;
+
+		normal_texture_field ::= json_object_find_fieldz(deref curmaterial, "normalTexture");
+		normal_texture : glb_texture mut := zero;
+		has_normal_texture : bool mut := false;
+		if(normal_texture_field != zero)
+		{
+			normal_texture = glb_populate_texture_from_json(deref normal_texture_field);
+			has_normal_texture = true;
+		}
+
+		occlusion_texture_field ::= json_object_find_fieldz(deref curmaterial, "occlusionTexture");
+		occlusion_texture : glb_texture mut := zero;
+		has_occlusion_texture : bool mut := false;
+		if(occlusion_texture_field != zero)
+		{
+			occlusion_texture = glb_populate_texture_from_json(deref occlusion_texture_field);
+			has_occlusion_texture = true;
+		}
+
+		emissive_texture_field ::= json_object_find_fieldz(deref curmaterial, "emissiveTexture");
+		emissive_texture : glb_texture mut := zero;
+		has_emissive_texture : bool mut := false;
+		if(emissive_texture_field != zero)
+		{
+			emissive_texture = glb_populate_texture_from_json(deref emissive_texture_field);
+			has_emissive_texture = true;
+		}
+		emissive_factor : f32 mut[4] := zero;
+		emissive_factor_field ::= json_object_find_fieldz(deref curmaterial, "emissiveFactor");
+		if(emissive_factor_field != zero)
+		{
+			for(j = 0, j < 4, j = j + 1)
+			{
+				deref(emissive_factor # j) = json_number_get_float(deref json_array_get_element(deref emissive_factor_field, j))@_;
+			}
+		}
+	
+		
 		deref(g->materials # i) = glb_material
 		{
 			.name := name;
 			.name_len := name_len;
-			.pbr_metallic_roughness := zero;
-			.normal_texture := zero;
-			.has_normal_texture := false;
-			.occlusion_texture := zero;
-			.has_occlusion_texture := false;
-			.emissive_texture := zero;
-			.emissive_factor := f32 mut[4]{1.0; 1.0; 1.0; 1.0;};
-			.has_emissive_texture := false;
+			.pbr_metallic_roughness := pbr;
+			.normal_texture := normal_texture;
+			.has_normal_texture := has_normal_texture;
+			.occlusion_texture := occlusion_texture;
+			.has_occlusion_texture := has_occlusion_texture;
+			.emissive_texture := emissive_texture;
+			.emissive_factor := emissive_factor;
+			.has_emissive_texture := has_emissive_texture;
 		};
 	}
+};
+
+glb_populate_texture_from_json ::= func(texture_field : json_data -> glb_texture)
+{
+	ret : glb_texture mut := zero;
+	ret.scale = 1.0;
+	
+	ret.index = json_number_get_integer(deref json_object_find_fieldz(texture_field, "index"))@_;
+
+	texcoord_field ::= json_object_find_fieldz(texture_field, "texCoord");
+	if(texcoord_field != zero)
+	{
+		ret.texCoord = json_number_get_integer(deref texcoord_field)@_;
+	}
+	
+	scale_field ::= json_object_find_fieldz(texture_field, "scale");
+	if(scale_field != zero)
+	{
+		ret.scale = json_number_get_float(deref scale_field)@_;
+	}
+	return ret;
 };
 
 glb_populate_primitive_from_json ::= func(primitive_field : json_data -> glb_mesh_primitive)
