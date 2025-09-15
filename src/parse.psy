@@ -339,6 +339,42 @@ glb_populate_meshes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	}
 };
 
+glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+{
+	i : u64 mut;
+	j : u64 mut;
+	materials_field ::= json_object_find_fieldz(g->json, "materials");
+	g->materials_count = json_array_length(deref materials_field);
+	g->materials = arena_alloc(a, __sizeof(glb_material) * (g->materials_count));
+	for(i = 0, i < (g->materials_count), i = i + 1)
+	{
+		curmaterial ::= json_array_get_element(deref materials_field, i);
+		name_field ::= json_object_find_fieldz(deref curmaterial, "name");
+		name : u8? mut := zero;
+		name_len : u64 mut := zero;
+		if(name_field != zero)
+		{
+			name = json_string_data(deref name_field);
+			name_len = json_string_length(deref name_field);
+		}
+		
+
+		deref(g->materials # i) = glb_material
+		{
+			.name := name;
+			.name_len := name_len;
+			.pbr_metallic_roughness := zero;
+			.normal_texture := zero;
+			.has_normal_texture := false;
+			.occlusion_texture := zero;
+			.has_occlusion_texture := false;
+			.emissive_texture := zero;
+			.emissive_factor := f32 mut[4]{1.0; 1.0; 1.0; 1.0;};
+			.has_emissive_texture := false;
+		};
+	}
+};
+
 glb_populate_primitive_from_json ::= func(primitive_field : json_data -> glb_mesh_primitive)
 {
 	// lets do the hard part - attribs
@@ -503,6 +539,7 @@ glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	glb_populate_views_from_json(g, a);
 	glb_populate_accessors_from_json(g, a);
 	glb_populate_meshes_from_json(g, a);
+	glb_populate_materials_from_json(g, a);
 };
 
 glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb_parse_state)

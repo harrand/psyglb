@@ -21,6 +21,9 @@ glb ::= struct
 
 	meshes : glb_mesh mut?;
 	meshes_count : u64;
+
+	materials : glb_material mut?;
+	materials_count : u64;
 };
 
 glb_view ::= struct
@@ -119,6 +122,39 @@ glb_mesh_primitive ::= struct
 	joint_attribs : u64 mut[4];
 	weight_attribs : u64 mut[4];
 };
+
+glb_material ::= struct
+{
+	name : u8?;
+	name_len : u64;
+	// not optional
+	pbr_metallic_roughness : glb_pbr_metallic_roughness;
+	normal_texture : glb_texture;
+	has_normal_texture : bool;
+	occlusion_texture : glb_texture;
+	has_occlusion_texture : bool;
+	emissive_texture : glb_texture;
+	emissive_factor : f32 mut[4];
+	has_emissive_texture : bool;
+};
+
+glb_pbr_metallic_roughness ::= struct
+{
+	base_colour_texture : glb_texture;
+	base_colour_factor : f32 mut[4];
+	metallic_roughness_texture : glb_texture;
+	has_metallic_roughness_texture : bool;
+	metallic_factor : f32;
+	roughness_factor : f32;
+};
+
+glb_texture ::= struct
+{
+	index : u64;
+	texCoord : u64;
+	scale : f32;
+};
+
 
 glb_scene_verbose_print ::= func(s : glb_scene -> v0)
 {
