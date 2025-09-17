@@ -99,65 +99,98 @@ glb_node ::= struct
 
 glb_accessor ::= struct
 {
+	// mandatory
 	view_idx : u64;
 	// optional - default 0
 	offset : u64;
+	// mandatory
 	component_type: u64;
+	// mandatory
 	count : u64;
+	// mandatory
 	type : u8?;
+	// mandatory
 	type_len : u64;
 };
 
 glb_mesh ::= struct
 {
+	// optional - default zero
 	name : u8?;
+	// optional - default zero
 	name_len : u64;
+	// optional - default zero
 	primitives : glb_mesh_primitive mut?;
+	// optional - default zero
 	primitives_count : u64;
 };
 
 glb_mesh_primitive ::= struct
 {
+	// optional - default GLTF_MODE_TRIANGLES
 	mode : u64;
+	// optional - default badidx
 	indices : u64;
+	// optional - default badidx
 	position_attrib : u64;
+	// optional - default badidx
 	normal_attrib : u64;
+	// optional - default badidx
 	tangent_attrib : u64;
+	// optional - default badidx[4]
 	texcoord_attribs : u64 mut[4];
+	// optional - default badidx[4]
 	color_attribs : u64 mut[4];
+	// optional - default badidx[4]
 	joint_attribs : u64 mut[4];
+	// optional - default badidx[4]
 	weight_attribs : u64 mut[4];
 };
 
 glb_material ::= struct
 {
+	// optional - default zero
 	name : u8?;
+	// optional - default zero
 	name_len : u64;
-	// not optional
+	// optional - default as required by spec
 	pbr_metallic_roughness : glb_pbr_metallic_roughness;
+	// optional - ignore if !has_normal_texture
 	normal_texture : glb_material_texture;
 	has_normal_texture : bool;
+	// optional - ignore if !has_occlusion_texture
 	occlusion_texture : glb_material_texture;
 	has_occlusion_texture : bool;
+	// optional - ignore if !has_emissive_texture
 	emissive_texture : glb_material_texture;
-	emissive_factor : f32 mut[4];
 	has_emissive_texture : bool;
+	// optional - default zero[4]
+	emissive_factor : f32 mut[4];
 };
 
 glb_pbr_metallic_roughness ::= struct
 {
+	// optional - ignore if !has_base_colour_texture
 	base_colour_texture : glb_material_texture;
+	has_base_colour_texture : bool;
+	// optional - default 1.0[4]
 	base_colour_factor : f32 mut[4];
+	// optional - ignore if !has_metallic_roughness_texture
 	metallic_roughness_texture : glb_material_texture;
 	has_metallic_roughness_texture : bool;
+	// optional - default 1.0
 	metallic_factor : f32;
+	// optional - default 1.0
 	roughness_factor : f32;
 };
 
 glb_camera ::= struct
 {
+	// mandatory
 	type : glb_camera_type;
+	// optional - ignore if type == .orthographic
 	perspective : glb_perspective;
+	// optional - ignore if type == .perspective
 	orthographic : glb_orthographic;
 };
 

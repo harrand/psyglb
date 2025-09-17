@@ -385,7 +385,12 @@ glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 			putzstr("detected glb with a material that is imssing its pbrMetallicRoughness field. these are not supported");
 			__debugbreak();
 		}
-		pbr.base_colour_texture = glb_populate_texture_from_json(deref json_object_find_fieldz(deref pbr_field, "baseColorTexture"));	
+		base_colour_texture_field ::= json_object_find_fieldz(deref pbr_field, "baseColorTexture");
+		if(base_colour_texture_field != zero)
+		{
+			pbr.base_colour_texture = glb_populate_texture_from_json(deref base_colour_texture_field);	
+			pbr.has_base_colour_texture = true;
+		}
 
 		pbr.base_colour_factor = f32[4]{1.0; 1.0; 1.0; 1.0;};
 		base_colour_factor_field ::= json_object_find_fieldz(deref pbr_field, "baseColorFactor");
@@ -404,8 +409,19 @@ glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 			pbr.metallic_roughness_texture = glb_populate_texture_from_json(deref metallic_roughness_field);
 			pbr.has_metallic_roughness_texture = true;
 		}
-		pbr.metallic_factor = json_number_get_float(deref json_object_find_fieldz(deref pbr_field, "metallicFactor"))@_;
-		pbr.roughness_factor = json_number_get_float(deref json_object_find_fieldz(deref pbr_field, "roughnessFactor"))@_;
+		pbr.metallic_factor = 1.0;
+		metallic_factor_field ::= json_object_find_fieldz(deref pbr_field, "metallicFactor");
+		if(metallic_factor_field != zero)
+		{
+			pbr.metallic_factor = json_number_get_float(deref metallic_factor_field)@_;
+		}
+
+		pbr.roughness_factor = 1.0;
+		roughness_factor_field ::= json_object_find_fieldz(deref pbr_field, "roughnessFactor");
+		if(roughness_factor_field != zero)
+		{
+			pbr.roughness_factor = json_number_get_float(deref roughness_factor_field)@_;
+		}
 
 		normal_texture_field ::= json_object_find_fieldz(deref curmaterial, "normalTexture");
 		normal_texture : glb_material_texture mut := zero;
@@ -454,8 +470,8 @@ glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 			.occlusion_texture := occlusion_texture;
 			.has_occlusion_texture := has_occlusion_texture;
 			.emissive_texture := emissive_texture;
-			.emissive_factor := emissive_factor;
 			.has_emissive_texture := has_emissive_texture;
+			.emissive_factor := emissive_factor;
 		};
 	}
 };
@@ -478,6 +494,11 @@ glb_populate_cameras_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 		type_string ::= json_string_data(deref type_field);
 		type_string_len ::= json_string_length(deref type_field);
 		camtype : glb_camera_type mut;
+		if(type_field == zero)
+		{
+			putzstr("invalid glb - camera is missing 'type' field");
+			__debugbreak();
+		}
 
 		if(type_string_len == zstrlen("perspective"))
 		{
