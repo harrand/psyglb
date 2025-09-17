@@ -54,7 +54,11 @@ glb_populate_scenes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	i : u64 mut;
 	j : u64 mut;
 	// scenes
-	(g->default_scene) = json_number_get_integer(deref json_object_find_fieldz(g->json, "scene"))@u64;
+	scene_field ::= json_object_find_fieldz(g->json, "scene");
+	if(scene_field != zero)
+	{
+		(g->default_scene) = json_number_get_integer(deref scene_field)@u64;
+	}
 	scenes_field ::= json_object_find_fieldz(g->json, "scenes");
 	g->scenes_count = json_array_length(deref scenes_field);
 	g->scenes = arena_alloc(a, __sizeof(glb_scene) * (g->scenes_count));
@@ -97,6 +101,10 @@ glb_populate_nodes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	i : u64 mut;
 	j : u64 mut;
 	nodes_field ::= json_object_find_fieldz(g->json, "nodes");
+	if(nodes_field == zero)
+	{
+		return;
+	}
 	g->nodes_count = json_array_length(deref nodes_field);
 	g->nodes = arena_alloc(a, __sizeof(glb_node) * (g->nodes_count));
 	for(i = 0, i < (g->nodes_count), i = i + 1)
@@ -203,6 +211,10 @@ glb_populate_views_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 {
 	i : u64 mut;
 	views_field ::= json_object_find_fieldz(g->json, "bufferViews");
+	if(views_field == zero)
+	{
+		return;
+	}
 	g->views_count = json_array_length(deref views_field);
 	g->views = arena_alloc(a, __sizeof(glb_view) * (g->views_count));
 	for(i = 0, i < (g->views_count), i = i + 1)
@@ -264,6 +276,10 @@ glb_populate_accessors_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 {
 	i : u64 mut;
 	accessors_field ::= json_object_find_fieldz(g->json, "accessors");
+	if(accessors_field == zero)
+	{
+		return;
+	}
 	g->accessors_count = json_array_length(deref accessors_field);
 	g->accessors = arena_alloc(a, __sizeof(glb_accessor) * (g->accessors_count));
 	for(i = 0, i < (g->accessors_count), i = i + 1)
@@ -344,6 +360,10 @@ glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	i : u64 mut;
 	j : u64 mut;
 	materials_field ::= json_object_find_fieldz(g->json, "materials");
+	if(materials_field == zero)
+	{
+		return;
+	}
 	g->materials_count = json_array_length(deref materials_field);
 	g->materials = arena_alloc(a, __sizeof(glb_material) * (g->materials_count));
 	for(i = 0, i < (g->materials_count), i = i + 1)
@@ -388,7 +408,7 @@ glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 		pbr.roughness_factor = json_number_get_float(deref json_object_find_fieldz(deref pbr_field, "roughnessFactor"))@_;
 
 		normal_texture_field ::= json_object_find_fieldz(deref curmaterial, "normalTexture");
-		normal_texture : glb_texture mut := zero;
+		normal_texture : glb_material_texture mut := zero;
 		has_normal_texture : bool mut := false;
 		if(normal_texture_field != zero)
 		{
@@ -397,7 +417,7 @@ glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 		}
 
 		occlusion_texture_field ::= json_object_find_fieldz(deref curmaterial, "occlusionTexture");
-		occlusion_texture : glb_texture mut := zero;
+		occlusion_texture : glb_material_texture mut := zero;
 		has_occlusion_texture : bool mut := false;
 		if(occlusion_texture_field != zero)
 		{
@@ -406,7 +426,7 @@ glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 		}
 
 		emissive_texture_field ::= json_object_find_fieldz(deref curmaterial, "emissiveTexture");
-		emissive_texture : glb_texture mut := zero;
+		emissive_texture : glb_material_texture mut := zero;
 		has_emissive_texture : bool mut := false;
 		if(emissive_texture_field != zero)
 		{
@@ -440,9 +460,174 @@ glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	}
 };
 
-glb_populate_texture_from_json ::= func(texture_field : json_data -> glb_texture)
+glb_populate_cameras_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 {
-	ret : glb_texture mut := zero;
+	i : u64 mut;
+	j : u64 mut;
+	cameras_field ::= json_object_find_fieldz(g->json, "cameras");
+	if(cameras_field == zero)
+	{
+		return;
+	}
+	g->cameras_count = json_array_length(deref cameras_field);
+	g->cameras = arena_alloc(a, __sizeof(glb_camera) * (g->cameras_count));
+	for(i = 0, i < (g->cameras_count), i = i + 1)
+	{
+		curcam ::= json_array_get_element(deref cameras_field, i);
+		type_field ::= json_object_find_fieldz(deref curcam, "type");
+		type_string ::= json_string_data(deref type_field);
+		type_string_len ::= json_string_length(deref type_field);
+		camtype : glb_camera_type mut;
+
+		if(type_string_len == zstrlen("perspective"))
+		{
+			if(streql_n(type_string, "perspective", type_string_len))
+			{
+				camtype = glb_camera_type.perspective;
+			}
+			else
+			{
+				putzstr("invalid camera type ");
+				putchar('"');
+				putbytes(type_string, type_string_len);
+				putchar('"');
+			}
+		}
+		else
+		{
+			if(type_string_len == zstrlen("orthographic"))
+			{
+				if(streql_n(type_string, "orthographic", type_string_len))
+				{
+					camtype = glb_camera_type.orthographic;
+				}
+				else
+				{
+					putzstr("invalid camera type ");
+					putchar('"');
+					putbytes(type_string, type_string_len);
+					putchar('"');
+				}
+			}
+			else
+			{
+				putzstr("invalid camera type ");
+				putchar('"');
+				putbytes(type_string, type_string_len);
+				putchar('"');
+			}
+		}
+
+		persp : glb_perspective mut := zero;
+		ortho : glb_orthographic mut := zero;
+
+		if(camtype == (glb_camera_type.perspective))
+		{
+			persp_field ::= json_object_find_fieldz(deref curcam, "perspective");
+			if(persp_field == zero)
+			{
+				putzstr("malformed glb: perspective camera did not have 'perspective' field");
+				__debugbreak();
+			}
+			persp.aspect_ratio = json_number_get_float(deref json_object_find_fieldz(deref persp_field, "aspectRatio"))@_;
+			persp.yfov = json_number_get_float(deref json_object_find_fieldz(deref persp_field, "yfov"))@_;
+			persp.znear = json_number_get_float(deref json_object_find_fieldz(deref persp_field, "znear"))@_;
+			zfar_field ::= json_object_find_fieldz(deref persp_field, "zfar");
+			if(zfar_field != zero)
+			{
+				persp.has_zfar = true;
+				persp.zfar = json_number_get_float(deref zfar_field)@_;
+			}
+		}
+		else
+		{
+			ortho_field ::= json_object_find_fieldz(deref curcam, "orthographic");
+			if(ortho_field == zero)
+			{
+				putzstr("malformed glb: orthographic camera did not have 'orthographic' field");
+				__debugbreak();
+			}
+			ortho.xmag = json_number_get_float(deref json_object_find_fieldz(deref persp_field, "xmag"))@_;
+			ortho.ymag = json_number_get_float(deref json_object_find_fieldz(deref persp_field, "ymag"))@_;
+			ortho.znear = json_number_get_float(deref json_object_find_fieldz(deref persp_field, "znear"))@_;
+			ortho.zfar = json_number_get_float(deref json_object_find_fieldz(deref persp_field, "zfar"))@_;
+		}
+
+		deref(g->cameras # i) = glb_camera
+		{
+			.type := camtype;
+			.perspective := persp;
+			.orthographic := ortho;
+		};
+	}
+};
+
+glb_populate_samplers_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+{
+	i : u64 mut;
+	samplers_field ::= json_object_find_fieldz(g->json, "samplers");
+	if(samplers_field == zero)
+	{
+		return;
+	}
+	g->samplers_count = json_array_length(deref samplers_field);
+	g->samplers = arena_alloc(a, __sizeof(glb_sampler) * (g->samplers_count));
+	for(i = 0, i < (g->samplers_count), i = i + 1)
+	{
+		cursam ::= json_array_get_element(deref samplers_field, i);
+		name_field ::= json_object_find_fieldz(deref cursam, "name");
+		name_string : u8? mut := zero;
+		name_string_len : u64 mut := zero;
+		if(name_field != zero)
+		{
+			name_string = json_string_data(deref name_field);
+			name_string_len = json_string_length(deref name_field);
+		}
+
+		mag_filter : glb_image_mag_filter mut := glb_image_mag_filter.nearest;
+		mag_filter_field ::= json_object_find_fieldz(deref cursam, "magFilter");
+		if(mag_filter_field != zero)
+		{
+			mag_filter = json_number_get_integer(deref mag_filter_field)@glb_image_mag_filter;
+		}
+
+		min_filter : glb_image_min_filter mut := glb_image_min_filter.nearest;
+		min_filter_field ::= json_object_find_fieldz(deref cursam, "minFilter");
+		if(min_filter_field != zero)
+		{
+			min_filter = json_number_get_integer(deref min_filter_field)@glb_image_min_filter;
+		}
+
+		wrap_u : glb_image_address_mode mut := glb_image_address_mode.repeat;
+		wrap_u_field ::= json_object_find_fieldz(deref cursam, "wrapS");
+		if(wrap_u_field != zero)
+		{
+			wrap_u = json_number_get_integer(deref wrap_u_field)@glb_image_address_mode;
+		}
+
+		wrap_v : glb_image_address_mode mut := glb_image_address_mode.repeat;
+		wrap_v_field ::= json_object_find_fieldz(deref cursam, "wrapT");
+		if(wrap_v_field != zero)
+		{
+			wrap_v = json_number_get_integer(deref wrap_v_field)@glb_image_address_mode;
+		}
+
+
+		deref(g->samplers # i) = glb_sampler
+		{
+			.name := name_string;
+			.name_len := name_string_len;
+			.mag_filter := mag_filter;
+			.min_filter := min_filter;
+			.wrap_u := wrap_u;
+			.wrap_v := wrap_v;
+		};
+	}
+};
+
+glb_populate_texture_from_json ::= func(texture_field : json_data -> glb_material_texture)
+{
+	ret : glb_material_texture mut := zero;
 	ret.scale = 1.0;
 	
 	ret.index = json_number_get_integer(deref json_object_find_fieldz(texture_field, "index"))@_;
@@ -626,6 +811,8 @@ glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	glb_populate_accessors_from_json(g, a);
 	glb_populate_meshes_from_json(g, a);
 	glb_populate_materials_from_json(g, a);
+	glb_populate_cameras_from_json(g, a);
+	glb_populate_samplers_from_json(g, a);
 };
 
 glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb_parse_state)

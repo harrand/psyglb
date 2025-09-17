@@ -59,6 +59,13 @@ glb_scene_count ::= func(g : glb -> u64)
 	return json_array_length(deref scenes_field);
 };
 
+glb_fetch_binary_data ::= func(g : glb, v : glb_view, out_ptr : u8? mut?, out_len : u64 mut? -> v0)
+{
+	b ::= g.bin;
+	deref(out_ptr) = ((b.data) # (v.offset));
+	deref(out_len) = (v.length);
+};
+
 global_arena_value : arena mut := zero;
 global_arena : arena mut? mut := zero;
 

@@ -24,6 +24,12 @@ glb ::= struct
 
 	materials : glb_material mut?;
 	materials_count : u64;
+
+	cameras : glb_camera mut?;
+	cameras_count : u64;
+
+	samplers : glb_sampler mut?;
+	samplers_count : u64;
 };
 
 glb_view ::= struct
@@ -129,32 +135,102 @@ glb_material ::= struct
 	name_len : u64;
 	// not optional
 	pbr_metallic_roughness : glb_pbr_metallic_roughness;
-	normal_texture : glb_texture;
+	normal_texture : glb_material_texture;
 	has_normal_texture : bool;
-	occlusion_texture : glb_texture;
+	occlusion_texture : glb_material_texture;
 	has_occlusion_texture : bool;
-	emissive_texture : glb_texture;
+	emissive_texture : glb_material_texture;
 	emissive_factor : f32 mut[4];
 	has_emissive_texture : bool;
 };
 
 glb_pbr_metallic_roughness ::= struct
 {
-	base_colour_texture : glb_texture;
+	base_colour_texture : glb_material_texture;
 	base_colour_factor : f32 mut[4];
-	metallic_roughness_texture : glb_texture;
+	metallic_roughness_texture : glb_material_texture;
 	has_metallic_roughness_texture : bool;
 	metallic_factor : f32;
 	roughness_factor : f32;
 };
 
-glb_texture ::= struct
+glb_camera ::= struct
+{
+	type : glb_camera_type;
+	perspective : glb_perspective;
+	orthographic : glb_orthographic;
+};
+
+glb_sampler ::= struct
+{
+	// optional - default zero
+	name : u8?;
+	// optional - default zero
+	name_len : u64;
+	// optional - default .nearest
+	mag_filter : glb_image_mag_filter;
+	// optional - default .nearest
+	min_filter : glb_image_min_filter;
+	// optional - default .repeat
+	wrap_u : glb_image_address_mode; // aka s
+	// optional - default .repeat
+	wrap_v : glb_image_address_mode; // aka t
+};
+
+glb_image_min_filter ::= enum
+{
+	.nearest := 0x2600;
+	.linear := 0x2601;
+	.nearest_mipmap_nearest := 0x2700;
+	.linear_mipmap_nearest := 0x2701;
+	.nearest_mipmap_linear := 0x2702;
+	.linear_mipmap_linear := 0x2703;
+};
+
+glb_image_mag_filter ::= enum
+{
+	.nearest := 0x2600;
+	.linear := 0x2601;
+};
+
+glb_image_address_mode ::= enum
+{
+	.clamp_to_edge := 0x812f;
+	.clamp_to_border := 0x812d;
+	.mirrored_repeat := 0x8370;
+	.repeat := 0x2901;
+	.mirror_clamp_to_edge := 0x8743;
+};
+
+glb_material_texture ::= struct
 {
 	index : u64;
 	texCoord : u64;
 	scale : f32;
 };
 
+glb_camera_type ::= enum
+{
+	.perspective := 0;
+	.orthographic := 1;
+};
+
+glb_perspective ::= struct
+{
+	aspect_ratio : f32;
+	yfov : f32;
+	znear : f32;
+	has_zfar : bool;
+	zfar : f32;
+};
+
+glb_orthographic ::= struct
+{
+	xmag : f32;
+	ymag : f32;
+	znear : f32;
+	zfar : f32;
+};
 
 glb_scene_verbose_print ::= func(s : glb_scene -> v0)
 {
@@ -399,6 +475,124 @@ glb_mesh_verbose_print ::= func(m : glb_mesh -> v0)
 	}
 };
 
+glb_material_verbose_print ::= func(m : glb_material -> v0)
+{
+	i : u64 mut;
+	if(m.name != zero)
+	{
+		putbytes(m.name, m.name_len);
+	}
+	else
+	{
+		putzstr("<unnamed material>");
+	}
+	putzstr(": [");
+	putchar(10);
+
+	putchar(9);
+	putzstr("pbrMetallicRoughness: [");
+	putchar(10);
+
+	putchar(9);
+	putchar(9);
+	putzstr("base_colour_texture: ");
+	glb_material_texture_verbose_print(m.pbr_metallic_roughness.base_colour_texture);
+	putchar(10);
+
+	putchar(9);
+	putchar(9);
+	putzstr("base colour factor: [");
+	base_colour_factor ::= m.pbr_metallic_roughness.base_colour_factor;
+	for(i = 0, i < 4, i = i + 1)
+	{
+		putfloat(deref(base_colour_factor # i));
+		if(i < 3)
+		{
+			putzstr(", ");
+		}
+	}
+	putzstr("]");
+	putchar(10);
+
+	if(m.pbr_metallic_roughness.has_metallic_roughness_texture)
+	{
+		putchar(9);
+		putchar(9);
+		putzstr("metallic_roughness_texture:: ");
+		glb_material_texture_verbose_print(m.pbr_metallic_roughness.metallic_roughness_texture);
+		putchar(10);
+	}
+
+	putchar(9);
+	putchar(9);
+	putzstr("metallic factor: ");
+	putfloat(m.pbr_metallic_roughness.metallic_factor);
+	putchar(10);
+
+	putchar(9);
+	putchar(9);
+	putzstr("roughness factor: ");
+	putfloat(m.pbr_metallic_roughness.roughness_factor);
+	putchar(10);
+
+	putchar(9);
+	putzstr("],");
+	putchar(10);
+
+	if(m.has_normal_texture)
+	{
+		putchar(9);
+		putzstr("normal texture: ");
+		glb_material_texture_verbose_print(m.normal_texture);
+		putchar(10);
+	}
+
+	if(m.has_occlusion_texture)
+	{
+		putchar(9);
+		putzstr("occlusion texture: ");
+		glb_material_texture_verbose_print(m.occlusion_texture);
+		putchar(10);
+	}
+
+	if(m.has_emissive_texture)
+	{
+		putchar(9);
+		putzstr("emissive texture: ");
+		glb_material_texture_verbose_print(m.emissive_texture);
+		putchar(10);
+	}
+	putchar(9);
+	putzstr("emissive factor: [");
+	emissive_factor ::= m.emissive_factor;
+	for(i = 0, i < 4, i = i + 1)
+	{
+		putfloat(deref(emissive_factor # i));
+		if(i < 3)
+		{
+			putzstr(", ");
+		}
+	}
+	putzstr("]");
+
+	putchar(10);
+	putzstr("]");
+};
+
+glb_material_texture_verbose_print ::= func(t : glb_material_texture -> v0)
+{
+	putzstr("{");
+	putzstr("index: ");
+	putuint(t.index);
+	putzstr(", ");
+	putzstr("texcoord: ");
+	putuint(t.texCoord);
+	putzstr(", ");
+	putzstr("scale: ");
+	putfloat(t.scale);
+	putzstr("}");
+};
+
 glb_verbose_print ::= func(g : glb -> v0)
 {
 	if(g.errmsg != zero)
@@ -409,9 +603,9 @@ glb_verbose_print ::= func(g : glb -> v0)
 		return;
 	}
 	i : u64 mut;
-	for(i = 0, i < (g.nodes_count), i = i + 1)
+	for(i = 0, i < (g.materials_count), i = i + 1)
 	{
-		glb_node_verbose_print(deref(g.nodes # i));
+		glb_material_verbose_print(deref(g.materials # i));
 		putchar(10);
 	}
 };
