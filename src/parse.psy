@@ -1,16 +1,3 @@
-glb_parse_state ::= struct
-{
-	result : glb;
-	hdr : glb_header;
-};
-
-glb_header ::= struct
-{
-	magic : u32;
-	version : u32;
-	length : u32;
-};
-
 glb_chunk ::= struct
 {
 	length : u32;
@@ -18,22 +5,22 @@ glb_chunk ::= struct
 	data : u8?;
 };
 
-glb_validate_hdr ::= func(s : glb_parse_state mut? -> v0)
+glb_parse_error ::= func(g : glb mut?, errmsg : u8? -> v0)
 {
-	hdr ::= s->hdr;
+	g->errmsg = errmsg;
+};
+
+glb_validate_hdr ::= func(g : glb mut? -> v0)
+{
+	hdr ::= g->header;
 	if(hdr.magic != 0x46546C67)
 	{
-		glb_parse_error(s, "invalid glb header - magic mismatch");
+		glb_parse_error(g, "invalid glb header - magic mismatch");
 	}
 	if(hdr.version != 2)
 	{
-		glb_parse_error(s, "invalid glb header - must be version 2");
+		glb_parse_error(g, "invalid glb header - must be version 2");
 	}
-};
-
-glb_parse_error ::= func(s : glb_parse_state mut?, errmsg : u8? -> v0)
-{
-	s->result.errmsg = errmsg;
 };
 
 glb_parse_chunk ::= func(buf : u8? -> glb_chunk)
@@ -224,8 +211,8 @@ glb_populate_views_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 		buf_idx ::= json_number_get_integer(deref json_object_find_fieldz(deref cur, "buffer"));
 		if(buf_idx != 0)
 		{
-			putzstr("detected bufferView not pointed at buffer 0, which is not supported");
-			__debugbreak();
+			glb_parse_error(g, "detected bufferView not pointed at buffer 0, which is not supported");
+			return;
 		}
 
 		off_field ::= json_object_find_fieldz(deref cur, "byteOffset");
@@ -287,8 +274,7 @@ glb_populate_accessors_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 		cur ::= json_array_get_element(deref accessors_field, i);
 		if(json_object_find_fieldz(deref cur, "sparse") != zero)
 		{
-			putzstr("sparse accessors in a GLB are not supported");
-			__debugbreak();
+			glb_parse_error(g, "sparse accessors in a GLB are not supported");
 			return;
 		}
 
@@ -382,8 +368,8 @@ glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 		pbr_field ::= json_object_find_fieldz(deref curmaterial, "pbrMetallicRoughness");
 		if(pbr_field == zero)
 		{
-			putzstr("detected glb with a material that is imssing its pbrMetallicRoughness field. these are not supported");
-			__debugbreak();
+			glb_parse_error(g, "detected glb with a material that is imssing its pbrMetallicRoughness field. these are not supported");
+			return;
 		}
 		base_colour_texture_field ::= json_object_find_fieldz(deref pbr_field, "baseColorTexture");
 		if(base_colour_texture_field != zero)
@@ -496,8 +482,8 @@ glb_populate_cameras_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 		camtype : glb_camera_type mut;
 		if(type_field == zero)
 		{
-			putzstr("invalid glb - camera is missing 'type' field");
-			__debugbreak();
+			glb_parse_error(g, "invalid glb - camera is missing 'type' field");
+			return;
 		}
 
 		if(type_string_len == zstrlen("perspective"))
@@ -547,8 +533,8 @@ glb_populate_cameras_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 			persp_field ::= json_object_find_fieldz(deref curcam, "perspective");
 			if(persp_field == zero)
 			{
-				putzstr("malformed glb: perspective camera did not have 'perspective' field");
-				__debugbreak();
+				glb_parse_error(g, "malformed glb: perspective camera did not have 'perspective' field");
+			return;
 			}
 			persp.aspect_ratio = json_number_get_float(deref json_object_find_fieldz(deref persp_field, "aspectRatio"))@_;
 			persp.yfov = json_number_get_float(deref json_object_find_fieldz(deref persp_field, "yfov"))@_;
@@ -565,8 +551,8 @@ glb_populate_cameras_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 			ortho_field ::= json_object_find_fieldz(deref curcam, "orthographic");
 			if(ortho_field == zero)
 			{
-				putzstr("malformed glb: orthographic camera did not have 'orthographic' field");
-				__debugbreak();
+				glb_parse_error(g, "malformed glb: orthographic camera did not have 'orthographic' field");
+			return;
 			}
 			ortho.xmag = json_number_get_float(deref json_object_find_fieldz(deref persp_field, "xmag"))@_;
 			ortho.ymag = json_number_get_float(deref json_object_find_fieldz(deref persp_field, "ymag"))@_;
@@ -811,14 +797,14 @@ glb_verify_single_buffer ::= func(g : glb mut?, a : arena mut? -> v0)
 		cur ::= json_array_get_element(deref buffers_field, i);
 		if(json_object_find_fieldz(deref cur, "uri") != zero)
 		{
-			putzstr("detected glb with a buffer containing a uri. these are not supported");
-			__debugbreak();
+			glb_parse_error(g, "detected glb with a buffer containing a uri. these are not supported");
+			return;
 		}
 	}
 	if(buffers_count > 1)
 	{
-		putzstr("glbs with more than one buffer are not supported.");
-		__debugbreak();
+		glb_parse_error(g, "glbs with more than one buffer are not supported.");
+			return;
 	}
 	
 };
@@ -836,11 +822,11 @@ glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	glb_populate_samplers_from_json(g, a);
 };
 
-glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb_parse_state)
+glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb)
 {
-	ret ::= zero@glb_parse_state mut;
-	ret.hdr = deref((buf)@glb_header?);
-	len ::= ret.hdr.length@u64;
+	ret ::= zero@glb mut;
+	ret.header = deref((buf)@glb_header?);
+	len ::= ret.header.length@u64;
 	glb_validate_hdr(ref ret);
 	offset : u64 mut := __sizeof(glb_header);
 
@@ -857,14 +843,14 @@ glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb_parse_stat
 		if(offset == __sizeof(glb_header))
 		{
 			// this is the first chunk. guaranteed to be the json chunk
-			ret.result.json = json_parse_buffer_named("<glb json chunk>", chunk.data, chunk.length@_, a);
+			ret.json = json_parse_buffer_named("<glb json chunk>", chunk.data, chunk.length@_, a);
 			putzstr("json chunk size: ");
 			putuint(chunk.length@_);
 			putchar(10);
 		}
 		else
 		{
-			if(ret.result.bin.data == zero)
+			if(ret.bin.data == zero)
 			{
 				// ensure that the chunk header is BIN\0
 				if(!streql_n(ref(chunk.type)@u8?, "BIN", 3))
@@ -874,7 +860,7 @@ glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb_parse_stat
 					putchar(10);
 					__debugbreak();
 				}
-				ret.result.bin = glb_binary_chunk
+				ret.bin = glb_binary_chunk
 				{
 					.data := chunk.data;
 					.length := chunk.length@_;
@@ -892,6 +878,6 @@ glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb_parse_stat
 		offset = (offset + glb_chunk_total_size(chunk));
 	}
 
-	glb_populate_fields_from_json(ref(ret.result), a);
+	glb_populate_fields_from_json(ref ret, a);
 	return ret;
 };

@@ -2,6 +2,7 @@ glb_badidx : u64 static := -1;
 
 glb ::= struct
 {
+	header : glb_header;
 	errmsg : u8?;
 	json : json_data;
 	bin : glb_binary_chunk;
@@ -30,6 +31,13 @@ glb ::= struct
 
 	samplers : glb_sampler mut?;
 	samplers_count : u64;
+};
+
+glb_header ::= struct
+{
+	magic : u32;
+	version : u32;
+	length : u32;
 };
 
 glb_view ::= struct

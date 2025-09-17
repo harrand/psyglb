@@ -7,7 +7,7 @@
 
 glb_parse_buffer ::= func(buf : u8?, len : u64, a : arena mut? -> glb)
 {
-	return glb_do_parse(buf, len, a).result;
+	return glb_do_parse(buf, len, a);
 };
 
 glb_parse_file ::= func(path : u8?, a : arena mut? -> glb)
