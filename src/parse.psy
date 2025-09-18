@@ -833,20 +833,11 @@ glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb)
 	json_chunk : glb_chunk mut;
 	while(offset < len)
 	{
-		putzstr("offset: ");
-		putuint(offset);
-		putzstr(", len: ");
-		putuint(len);
-		putchar(10);
-
 		chunk ::= glb_parse_chunk(buf # offset);
 		if(offset == __sizeof(glb_header))
 		{
 			// this is the first chunk. guaranteed to be the json chunk
 			ret.json = json_parse_buffer_named("<glb json chunk>", chunk.data, chunk.length@_, a);
-			putzstr("json chunk size: ");
-			putuint(chunk.length@_);
-			putchar(10);
 		}
 		else
 		{
