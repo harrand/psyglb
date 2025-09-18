@@ -632,6 +632,68 @@ glb_populate_samplers_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	}
 };
 
+glb_populate_skins_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+{
+	i : u64 mut;
+	j : u64 mut;
+	skins_field ::= json_object_find_fieldz(g->json, "skins");
+	if(skins_field == zero)
+	{
+		return;
+	}
+	g->skins_count = json_array_length(deref skins_field);
+	g->skins = arena_alloc(a, __sizeof(glb_skin) * (g->skins_count));
+	for(i = 0, i < (g->skins_count), i = i + 1)
+	{
+		curskin ::= json_array_get_element(deref skins_field, i);
+		name_field ::= json_object_find_fieldz(deref curskin, "name");
+		name_string : u8? mut := zero;
+		name_string_len : u64 mut := zero;
+		if(name_field != zero)
+		{
+			name_string = json_string_data(deref name_field);
+			name_string_len = json_string_length(deref name_field);
+		}
+
+		skeleton : u64 mut := glb_badidx;
+		skeleton_field ::= json_object_find_fieldz(deref curskin, "skeleton");
+		if(skeleton_field != zero)
+		{
+			skeleton = json_number_get_integer(deref skeleton_field)@_;
+		}
+
+		joints : u64 mut? mut := zero;
+		joints_count : u64 mut := zero;
+		joints_field ::= json_object_find_fieldz(deref curskin, "joints");
+		if(joints_field != zero)
+		{
+			joints_count = json_array_length(deref joints_field);
+			joints = arena_alloc(a, joints_count * __sizeof(u64));
+			for(j = 0, j < joints_count, j = j + 1)
+			{
+				deref(joints # j) = json_number_get_integer(deref json_array_get_element(deref joints_field, j))@_;
+			}
+		}
+
+		inverse_bind_matrices : u64 mut := glb_badidx;
+		inverse_bind_matrices_field ::= json_object_find_fieldz(deref curskin, "inverseBindMatrices");
+		if(inverse_bind_matrices_field != zero)
+		{
+			inverse_bind_matrices = json_number_get_integer(deref inverse_bind_matrices_field)@_;
+		}
+
+		deref(g->skins # i) = glb_skin
+		{
+			.name := name_string;
+			.name_len := name_string_len;
+			.skeleton := skeleton;
+			.joints := joints;
+			.joints_count := joints_count;
+			.inverse_bind_matrices := inverse_bind_matrices;
+		};
+	}
+};
+
 glb_populate_texture_from_json ::= func(texture_field : json_data -> glb_material_texture)
 {
 	ret : glb_material_texture mut := zero;
@@ -820,6 +882,7 @@ glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	glb_populate_materials_from_json(g, a);
 	glb_populate_cameras_from_json(g, a);
 	glb_populate_samplers_from_json(g, a);
+	glb_populate_skins_from_json(g, a);
 };
 
 glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb)

@@ -31,6 +31,9 @@ glb ::= struct
 
 	samplers : glb_sampler mut?;
 	samplers_count : u64;
+
+	skins : glb_skin mut?;
+	skins_count : u64;
 };
 
 glb_header ::= struct
@@ -216,6 +219,22 @@ glb_sampler ::= struct
 	wrap_u : glb_image_address_mode; // aka s
 	// optional - default .repeat
 	wrap_v : glb_image_address_mode; // aka t
+};
+
+glb_skin ::= struct
+{
+	// optional - default zero
+	name : u8?;
+	// optional - default zero
+	name_len : u64;
+	// optional - default badidx
+	skeleton : u64;
+	// mandatory
+	joints : u64 mut?;	
+	// mandatory
+	joints_count : u64;
+	// optional - default badidx
+	inverse_bind_matrices : u64;
 };
 
 glb_image_min_filter ::= enum
