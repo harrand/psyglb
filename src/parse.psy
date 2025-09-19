@@ -694,6 +694,79 @@ glb_populate_skins_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	}
 };
 
+glb_populate_animations_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+{
+	i : u64 mut;
+	j : u64 mut;
+	animations_field ::= json_object_find_fieldz(g->json, "animations");
+	if(animations_field == zero)
+	{
+		return;
+	}
+	g->animations_count = json_array_length(deref animations_field);
+	g->animations = arena_alloc(a, __sizeof(glb_animation) * (g->animations_count));
+	for(i = 0, i < (g->animations_count), i = i + 1)
+	{
+		curanim ::= json_array_get_element(deref animations_field, i);
+		name_field ::= json_object_find_fieldz(deref curanim, "name");
+		name_string : u8? mut := zero;
+		name_string_len : u64 mut := zero;
+		if(name_field != zero)
+		{
+			name_string = json_string_data(deref name_field);
+			name_string_len = json_string_length(deref name_field);
+		}
+
+		channels : glb_animation_channel mut? mut := zero;
+		channels_count : u64 mut := zero;
+		channels_field ::= json_object_find_fieldz(deref curanim, "channels");
+		if(channels_field != zero)
+		{
+			channels_count = json_array_length(deref channels_field);
+			channels = arena_alloc(a, channels_count * __sizeof(glb_animation_channel));
+			for(j = 0, j < channels_count, j = j + 1)
+			{
+				deref(channels # j) = glb_populate_animation_channel_from_json(deref json_array_get_element(deref channels_field, j));
+			}
+		}
+
+		samplers : glb_animation_sampler mut? mut := zero;
+		samplers_count : u64 mut := zero;
+		samplers_field ::= json_object_find_fieldz(deref curanim, "samplers");
+		if(samplers_field != zero)
+		{
+			samplers_count = json_array_length(deref samplers_field);
+			samplers = arena_alloc(a, samplers_count * __sizeof(glb_animation_sampler));
+			for(j = 0, j < samplers_count, j = j + 1)
+			{
+				deref(samplers # j) = glb_populate_animation_sampler_from_json(deref json_array_get_element(deref samplers_field, j));
+			}
+		}
+
+		deref(g->animations # i) = glb_animation
+		{
+			.name := name_string;
+			.name_len := name_string_len;
+			.channels := channels;
+			.channels_count := channels_count;
+			.samplers := samplers;
+			.samplers_count := samplers_count;
+		};
+	}
+};
+
+glb_populate_animation_channel_from_json ::= func(texture_field : json_data -> glb_animation_channel)
+{
+	// todo: impl
+	return zero;
+};
+
+glb_populate_animation_sampler_from_json ::= func(texture_field : json_data -> glb_animation_sampler)
+{
+	// todo: impl
+	return zero;
+};
+
 glb_populate_texture_from_json ::= func(texture_field : json_data -> glb_material_texture)
 {
 	ret : glb_material_texture mut := zero;
@@ -883,6 +956,7 @@ glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	glb_populate_cameras_from_json(g, a);
 	glb_populate_samplers_from_json(g, a);
 	glb_populate_skins_from_json(g, a);
+	glb_populate_animations_from_json(g, a);
 };
 
 glb_do_parse ::= func(buf : u8?, max_len : u64, a : arena mut? -> glb)

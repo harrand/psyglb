@@ -34,6 +34,9 @@ glb ::= struct
 
 	skins : glb_skin mut?;
 	skins_count : u64;
+
+	animations : glb_animation mut?;
+	animations_count : u64;
 };
 
 glb_header ::= struct
@@ -235,6 +238,63 @@ glb_skin ::= struct
 	joints_count : u64;
 	// optional - default badidx
 	inverse_bind_matrices : u64;
+};
+
+glb_animation ::= struct
+{
+	// optional - default zero
+	name : u8?;
+	// optional - default zero
+	name_len : u64;
+	// mandatory
+	channels : glb_animation_channel mut?;
+	// mandatory
+	channels_count : u64;
+	// mandatory
+	samplers : glb_animation_sampler mut?;
+	// mandatory
+	samplers_count : u64;
+};
+
+glb_animation_channel ::= struct
+{
+	// mandatory
+	sampler_idx : u64;
+	// mandatory
+	target : glb_animation_channel_target;
+};
+
+glb_animation_channel_target ::= struct
+{
+	// mandatory
+	node_idx : u64;
+	// mandatory
+	path : glb_animation_channel_target_path;
+};
+
+glb_animation_sampler ::= struct
+{
+	// mandatory
+	timestamps_accessor_idx : u64;
+	// optional - default .linear
+	interpolation : glb_animation_sampler_interpolation;
+	// mandatory
+	output_values_accessor_idx : u64;
+};
+
+glb_animation_channel_target_path ::= enum
+{
+	.translation := 1;
+	.rotation := 2;
+	.scale := 3;
+	.weights := 4;
+};
+
+glb_animation_sampler_interpolation ::= enum
+{
+	.linear := 0;
+	.step := 1;
+	.cubic_spline := 2;
 };
 
 glb_image_min_filter ::= enum
