@@ -324,7 +324,6 @@ glb_populate_meshes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 		{	
 			primitives_count = json_array_length(deref primitives_field);
 			primitives = arena_alloc(a, __sizeof(glb_mesh_primitive) * primitives_count);
-			// todo: populate primitive values
 			for(j = 0, j < primitives_count, j = j + 1)
 			{
 				deref(primitives # j) = glb_populate_primitive_from_json(deref(json_array_get_element(deref primitives_field, j)));
@@ -901,8 +900,12 @@ glb_populate_primitive_from_json ::= func(primitive_field : json_data -> glb_mes
 	indices : u64 mut := glb_badidx;
 	material : u64 mut := glb_badidx;
 	GLTF_MODE_TRIANGLES ::= 4;
-	mode : u64 mut := GLTF_MODE_TRIANGLES;
-	// todo: targets
+	mode : glb_mesh_primitive_mode mut := glb_mesh_primitive_mode.triangles;
+	mode_field ::= json_object_find_fieldz(primitive_field, "mode");
+	if(mode_field != zero)
+	{
+		mode = json_number_get_integer(deref mode_field)@glb_mesh_primitive_mode;
+	}
 
 	return glb_mesh_primitive
 	{

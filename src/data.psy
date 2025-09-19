@@ -142,7 +142,7 @@ glb_mesh ::= struct
 glb_mesh_primitive ::= struct
 {
 	// optional - default GLTF_MODE_TRIANGLES
-	mode : u64;
+	mode : glb_mesh_primitive_mode;
 	// optional - default badidx
 	indices : u64;
 	// optional - default badidx
@@ -159,6 +159,17 @@ glb_mesh_primitive ::= struct
 	joint_attribs : u64 mut[4];
 	// optional - default badidx[4]
 	weight_attribs : u64 mut[4];
+};
+
+glb_mesh_primitive_mode ::= enum
+{
+	.points := 0;
+	.lines := 1;
+	.line_loop := 2;
+	.line_strip := 3;
+	.triangles := 4;
+	.triangle_strip := 5;
+	.triangle_fan := 6;
 };
 
 glb_material ::= struct
@@ -499,7 +510,7 @@ glb_mesh_verbose_print ::= func(m : glb_mesh -> v0)
 		putchar(10);
 		putchar(9);
 		putzstr("[mode: ");
-		putuint(p.mode);
+		putzstr(__enumname(p.mode));
 		putzstr(", indices: ");
 		putuint(p.indices);
 		putzstr(", attribs: {");
