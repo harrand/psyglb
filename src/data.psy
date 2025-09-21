@@ -724,6 +724,25 @@ glb_material_texture_verbose_print ::= func(t : glb_material_texture -> v0)
 	putzstr("}");
 };
 
+glb_animation_verbose_print ::= func(a : glb_animation -> v0)
+{
+	i : u64 mut;
+
+	if(a.name != zero)
+	{
+		putbytes(a.name, a.name_len);
+	}
+	else
+	{
+		putzstr("<unnamed animation>");
+	}
+	putzstr(" (");
+	putuint(a.channels_count);
+	putzstr(" channels, ");
+	putuint(a.samplers_count);
+	putzstr(" samplers)");
+};
+
 glb_verbose_print ::= func(g : glb -> v0)
 {
 	if(g.errmsg != zero)
@@ -734,9 +753,9 @@ glb_verbose_print ::= func(g : glb -> v0)
 		return;
 	}
 	i : u64 mut;
-	for(i = 0, i < (g.materials_count), i = i + 1)
+	for(i = 0, i < (g.animations_count), i = i + 1)
 	{
-		glb_material_verbose_print(deref(g.materials # i));
+		glb_animation_verbose_print(deref(g.animations # i));
 		putchar(10);
 	}
 };
