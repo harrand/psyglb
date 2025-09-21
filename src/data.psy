@@ -23,6 +23,9 @@ glb ::= struct
 	meshes : glb_mesh mut?;
 	meshes_count : u64;
 
+	images : glb_image mut?;
+	images_count : u64;
+
 	materials : glb_material mut?;
 	materials_count : u64;
 
@@ -170,6 +173,24 @@ glb_mesh_primitive_mode ::= enum
 	.triangles := 4;
 	.triangle_strip := 5;
 	.triangle_fan := 6;
+};
+
+glb_image_mime_type ::= enum
+{
+	.jpg := 0;
+	.png := 1;
+};
+
+glb_image ::= struct
+{
+	// optional - default zero
+	name : u8?;
+	// optional - default zero
+	name_len : u64;
+	// mandatory
+	mime_type : glb_image_mime_type;
+	// mandatory
+	view_idx : u64;
 };
 
 glb_material ::= struct

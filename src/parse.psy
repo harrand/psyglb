@@ -340,6 +340,58 @@ glb_populate_meshes_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	}
 };
 
+glb_populate_images_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
+{
+	i : u64 mut;
+	j : u64 mut;
+	images_field ::= json_object_find_fieldz(g->json, "images");
+	if(images_field == zero)
+	{
+		return;
+	}
+	g->images_count = json_array_length(deref images_field);
+	g->images = arena_alloc(a, __sizeof(glb_image) * (g->images_count));
+	for(i = 0, i < (g->images_count), i = i + 1)
+	{
+		curimg ::= json_array_get_element(deref images_field, i);
+		name_field ::= json_object_find_fieldz(deref curimg, "name");
+		name : u8? mut := zero;
+		name_len : u64 mut := zero;
+		if(name_field != zero)
+		{
+			name = json_string_data(deref name_field);
+			name_len = json_string_length(deref name_field);
+		}
+
+		mime_type : glb_image_mime_type mut := zero;
+		mime_type_field ::= json_object_find_fieldz(deref curimg, "mimeType");
+		mime_type_data ::= json_string_data(deref mime_type_field);
+		mime_type_len ::= json_string_length(deref mime_type_field);
+
+		mime_type_names ::= u8?[2]{"image/jpeg"; "image/png";};
+		for(j = 0, j < (__sizeof(mime_type_names) / __sizeof(u8?)), j = j + 1)
+		{
+			curmime ::= deref(mime_type_names # j);
+			curmimelen ::= zstrlen(curmime);
+			if(curmimelen == mime_type_len)
+			{
+				if(streql_n(mime_type_data, curmime, mime_type_len))
+				{
+					mime_type = (j@glb_image_mime_type);
+				}
+			}
+		}
+
+		deref(g->images # i) = glb_image
+		{
+			.name := name;
+			.name_len := name_len;
+			.mime_type := mime_type;
+			.view_idx := json_number_get_integer(deref json_object_find_fieldz(deref curimg, "bufferView"))@_;
+		};
+	}
+};
+
 glb_populate_materials_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 {
 	i : u64 mut;
@@ -1000,6 +1052,7 @@ glb_populate_fields_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	glb_populate_views_from_json(g, a);
 	glb_populate_accessors_from_json(g, a);
 	glb_populate_meshes_from_json(g, a);
+	glb_populate_images_from_json(g, a);
 	glb_populate_materials_from_json(g, a);
 	glb_populate_cameras_from_json(g, a);
 	glb_populate_samplers_from_json(g, a);
