@@ -754,16 +754,61 @@ glb_populate_animations_from_json ::= func(g : glb mut?, a : arena mut? -> v0)
 	}
 };
 
-glb_populate_animation_channel_from_json ::= func(texture_field : json_data -> glb_animation_channel)
+glb_populate_animation_channel_from_json ::= func(channel_field : json_data -> glb_animation_channel)
 {
-	// todo: impl
-	return zero;
+	sampler_field ::= json_object_find_fieldz(channel_field, "sampler");
+	return glb_animation_channel
+	{
+		.sampler_idx := json_number_get_integer(deref json_object_find_fieldz(channel_field, "sampler"))@_;
+		.target := glb_populate_animation_channel_target_from_json(deref json_object_find_fieldz(channel_field, "target"));
+	};
 };
 
-glb_populate_animation_sampler_from_json ::= func(texture_field : json_data -> glb_animation_sampler)
+glb_populate_animation_channel_target_from_json ::= func(channel_target_field : json_data -> glb_animation_channel_target)
 {
-	// todo: impl
-	return zero;
+	path : glb_animation_channel_target_path mut := zero;
+	path_field ::= json_object_find_fieldz(channel_target_field, "path");
+	path_str ::= json_string_data(deref path_field);
+	path_len ::= json_string_length(deref path_field);
+
+	i : u64 mut;
+	for(i = 1, i <= 4, i = i + 1)
+	{
+		cur ::= i@glb_animation_channel_target_path;
+		curstr ::= __enumname(cur);
+		curstrlen ::= zstrlen(curstr);
+		if(curstrlen == path_len)
+		{
+			if(streql_n(path_str, curstr, path_len))
+			{
+				path = cur;
+			}
+		}
+	}
+	return glb_animation_channel_target
+	{
+		.node_idx := json_number_get_integer(deref json_object_find_fieldz(channel_target_field, "node"))@_;
+		.path := path;
+	};
+};
+
+glb_populate_animation_sampler_from_json ::= func(sampler_field : json_data -> glb_animation_sampler)
+{
+	input ::= json_number_get_integer(deref json_object_find_fieldz(sampler_field, "input"))@_;
+	interpolation : glb_animation_sampler_interpolation mut := glb_animation_sampler_interpolation.linear;
+	interpolation_field ::= json_object_find_fieldz(sampler_field, "interpolation");
+	if(interpolation_field != zero)
+	{
+		interpolation = json_number_get_integer(deref interpolation_field)@_;
+	}
+
+	output ::= json_number_get_integer(deref json_object_find_fieldz(sampler_field, "output"))@_;
+	return glb_animation_sampler
+	{
+		.timestamps_accessor_idx := input;
+		.interpolation := interpolation;
+		.output_values_accessor_idx := output;
+	};
 };
 
 glb_populate_texture_from_json ::= func(texture_field : json_data -> glb_material_texture)
