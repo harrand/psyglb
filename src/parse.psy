@@ -1004,6 +1004,12 @@ glb_populate_primitive_from_json ::= func(primitive_field : json_data -> glb_mes
 		mode = json_number_get_integer(deref mode_field)@glb_mesh_primitive_mode;
 	}
 
+	indices_field ::= json_object_find_fieldz(primitive_field, "indices");
+	if(indices_field != zero)
+	{
+		indices = json_number_get_integer(deref indices_field)@_;
+	}
+
 	return glb_mesh_primitive
 	{
 		.mode := mode;

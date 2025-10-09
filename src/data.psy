@@ -114,6 +114,16 @@ glb_node ::= struct
 	children_count : u64;
 };
 
+glb_accessor_component_type ::= enum
+{
+	.sbyte := 5120;
+	.ubyte := 5121;
+	.sshort := 5122;
+	.ushort := 5123;
+	.uint := 5125;
+	.flt := 5126;
+};
+
 glb_accessor ::= struct
 {
 	// mandatory
@@ -121,7 +131,7 @@ glb_accessor ::= struct
 	// optional - default 0
 	offset : u64;
 	// mandatory
-	component_type: u64;
+	component_type: glb_accessor_component_type;
 	// mandatory
 	count : u64;
 	// mandatory
