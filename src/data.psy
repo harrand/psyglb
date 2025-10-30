@@ -8,38 +8,38 @@ glb ::= struct
 	bin : glb_binary_chunk;
 
 	default_scene : u64;
-	scenes : glb_scene mut?;
 	scenes_count : u64;
+	scenes : glb_scene mut?;
 
-	nodes : glb_node mut?;
 	nodes_count : u64;
+	nodes : glb_node mut?;
 
-	views : glb_view mut?;
 	views_count : u64;
+	views : glb_view mut?;
 
-	accessors : glb_accessor mut?;
 	accessors_count : u64;
+	accessors : glb_accessor mut?;
 
-	meshes : glb_mesh mut?;
 	meshes_count : u64;
+	meshes : glb_mesh mut?;
 
-	images : glb_image mut?;
 	images_count : u64;
+	images : glb_image mut?;
 
-	materials : glb_material mut?;
 	materials_count : u64;
+	materials : glb_material mut?;
 
-	cameras : glb_camera mut?;
 	cameras_count : u64;
+	cameras : glb_camera mut?;
 
-	samplers : glb_sampler mut?;
 	samplers_count : u64;
+	samplers : glb_sampler mut?;
 
-	skins : glb_skin mut?;
 	skins_count : u64;
+	skins : glb_skin mut?;
 
-	animations : glb_animation mut?;
 	animations_count : u64;
+	animations : glb_animation mut?;
 };
 
 glb_header ::= struct
@@ -66,20 +66,20 @@ glb_view ::= struct
 
 glb_binary_chunk ::= struct
 {
-	data : u8?;
 	length : u64;
+	data : u8?;
 };
 
 glb_scene ::= struct
 {
 	// optional - default zero
-	name : u8?;
-	// optional - default zero
 	name_len : u64;
 	// optional - default zero
-	node_indices : u64?;
+	name : u8?;
 	// optional - default zero
 	node_indices_count : u64;
+	// optional - default zero
+	node_indices : u64 mut?;
 };
 
 glb_node_transform ::= enum
@@ -91,9 +91,9 @@ glb_node_transform ::= enum
 glb_node ::= struct
 {
 	// optional - default zero
-	name : u8?;
-	// optional - default zero
 	name_len : u64;
+	// optional - default zero
+	name : u8?;
 	// optional - default badidx
 	mesh_idx : u64;
 	// optional - default badidx
@@ -109,9 +109,9 @@ glb_node ::= struct
 	// optional - undefined if transform != .trs
 	scale : f32 mut[3];
 	// optional - default zero
-	children : u64 mut? mut;
-	// optional - default zero
 	children_count : u64;
+	// optional - default zero
+	children : u64 mut? mut;
 };
 
 glb_accessor_component_type ::= enum
