@@ -59,9 +59,9 @@ glb_view ::= struct
 	// optional - default badidx
 	target : u64;
 	// optional - default zero
-	name : u8?;
-	// optional - default zero
 	name_len : u64;
+	// optional - default zero
+	name : u8?;
 };
 
 glb_binary_chunk ::= struct
@@ -135,21 +135,21 @@ glb_accessor ::= struct
 	// mandatory
 	count : u64;
 	// mandatory
-	type : u8?;
-	// mandatory
 	type_len : u64;
+	// mandatory
+	type : u8?;
 };
 
 glb_mesh ::= struct
 {
 	// optional - default zero
-	name : u8?;
-	// optional - default zero
 	name_len : u64;
 	// optional - default zero
-	primitives : glb_mesh_primitive mut?;
+	name : u8?;
 	// optional - default zero
 	primitives_count : u64;
+	// optional - default zero
+	primitives : glb_mesh_primitive mut?;
 };
 
 glb_mesh_primitive ::= struct
