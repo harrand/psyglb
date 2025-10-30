@@ -289,13 +289,13 @@ glb_animation ::= struct
 	// optional - default zero
 	name : u8?;
 	// mandatory
-	channels : glb_animation_channel mut?;
-	// mandatory
 	channels_count : u64;
 	// mandatory
-	samplers : glb_animation_sampler mut?;
+	channels : glb_animation_channel mut?;
 	// mandatory
 	samplers_count : u64;
+	// mandatory
+	samplers : glb_animation_sampler mut?;
 };
 
 glb_animation_channel ::= struct
