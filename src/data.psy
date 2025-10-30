@@ -275,9 +275,9 @@ glb_skin ::= struct
 	// optional - default badidx
 	skeleton : u64;
 	// mandatory
-	joints : u64 mut?;	
-	// mandatory
 	joints_count : u64;
+	// mandatory
+	joints : u64 mut?;	
 	// optional - default badidx
 	inverse_bind_matrices : u64;
 };
