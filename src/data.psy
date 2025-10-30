@@ -194,9 +194,9 @@ glb_image_mime_type ::= enum
 glb_image ::= struct
 {
 	// optional - default zero
-	name : u8?;
-	// optional - default zero
 	name_len : u64;
+	// optional - default zero
+	name : u8?;
 	// mandatory
 	mime_type : glb_image_mime_type;
 	// mandatory
@@ -206,9 +206,9 @@ glb_image ::= struct
 glb_material ::= struct
 {
 	// optional - default zero
-	name : u8?;
-	// optional - default zero
 	name_len : u64;
+	// optional - default zero
+	name : u8?;
 	// optional - default as required by spec
 	pbr_metallic_roughness : glb_pbr_metallic_roughness;
 	// optional - ignore if !has_normal_texture
@@ -253,9 +253,9 @@ glb_camera ::= struct
 glb_sampler ::= struct
 {
 	// optional - default zero
-	name : u8?;
-	// optional - default zero
 	name_len : u64;
+	// optional - default zero
+	name : u8?;
 	// optional - default .nearest
 	mag_filter : glb_image_mag_filter;
 	// optional - default .nearest
@@ -269,9 +269,9 @@ glb_sampler ::= struct
 glb_skin ::= struct
 {
 	// optional - default zero
-	name : u8?;
-	// optional - default zero
 	name_len : u64;
+	// optional - default zero
+	name : u8?;
 	// optional - default badidx
 	skeleton : u64;
 	// mandatory
@@ -285,9 +285,9 @@ glb_skin ::= struct
 glb_animation ::= struct
 {
 	// optional - default zero
-	name : u8?;
-	// optional - default zero
 	name_len : u64;
+	// optional - default zero
+	name : u8?;
 	// mandatory
 	channels : glb_animation_channel mut?;
 	// mandatory
